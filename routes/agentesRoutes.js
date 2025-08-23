@@ -6,13 +6,12 @@ const router = express.Router();
 
 router.get(
   "/",
-  authMiddleware,
   agentesController.obterAgentes,
   agentesController.obterAgentesCargo,
   agentesController.obterAgentesSort
 );
 
-router.get("/:id", authMiddleware, agentesController.obterUmAgente);
+router.get("/:id", agentesController.obterUmAgente);
 
 router.get("/:id/casos", authMiddleware, agentesController.obterCasosDoAgente);
 
