@@ -5,22 +5,22 @@ import { authMiddleware } from "../middlewares/authMiddleware.js";
 const router = express.Router();
 
 router.get(
-  "/agentes",
+  "/agents",
   agentesController.obterAgentes,
   agentesController.obterAgentesCargo,
   agentesController.obterAgentesSort
 );
 
-router.get("/agentes/:id", agentesController.obterUmAgente);
+router.get("/agents/:id", agentesController.obterUmAgente);
 
-router.get("/agentes/:id/casos", agentesController.obterCasosDoAgente);
+router.get("/agents/:id/casos", agentesController.obterCasosDoAgente);
 
-router.post("/agentes", agentesController.criarAgente);
+router.post("/agents", agentesController.criarAgente);
 
-router.put("/agentes/:id", agentesController.atualizarAgente);
+router.put("/agents/:id", agentesController.atualizarAgente);
 
-router.patch("/agentes/:id", agentesController.atualizarAgente);
+router.patch("/agents/:id", agentesController.atualizarAgente);
 
-router.delete("/agentes/:id", agentesController.apagarAgente);
+router.delete("/agents/:id", agentesController.apagarAgente);
 
 export default router;
