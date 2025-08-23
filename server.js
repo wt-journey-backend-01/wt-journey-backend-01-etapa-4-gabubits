@@ -11,10 +11,10 @@ const PORT = 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use(authRoutes);
 app.use(authMiddleware);
 app.use(agentesRoutes);
 app.use("/casos", casosRoutes);
-app.use(authRoutes);
 
 app.use((req, res, next) => {
   next(
