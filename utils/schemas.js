@@ -148,7 +148,7 @@ export const casoSchema = z.object(
   }
 );
 
-export const usuarioRegSchema = z.object(
+export const usuarioRegSchema = z.strictObject(
   {
     ...baseStringSchema("nome"),
     ...baseEmailSchema("email"),
@@ -158,11 +158,13 @@ export const usuarioRegSchema = z.object(
     error: (issue) => {
       if (issue.code === "invalid_type")
         return "O corpo de requisição deve ser um OBJETO.";
+      if (issue.code === "unrecognized_keys")
+        return `Chaves não reconhecidas: ${issue.keys}`;
     },
   }
 );
 
-export const usuarioLoginSchema = z.object(
+export const usuarioLoginSchema = z.strictObject(
   {
     ...baseEmailSchema("email"),
     ...basePasswordSchema("senha"),
@@ -171,6 +173,8 @@ export const usuarioLoginSchema = z.object(
     error: (issue) => {
       if (issue.code === "invalid_type")
         return "O corpo de requisição deve ser um OBJETO.";
+      if (issue.code === "unrecognized_keys")
+        return `Chaves não reconhecidas: ${issue.keys}`;
     },
   }
 );
