@@ -82,11 +82,9 @@ export async function loginUsuario(req, res, next) {
     });
 
     res.status(200).json({
-      acess_token: token,
+      access_token: token,
     });
-  } catch (e) {
-    next(e);
-  }
+  } catch (e) {}
 }
 
 export async function apagarUsuario(req, res, next) {
