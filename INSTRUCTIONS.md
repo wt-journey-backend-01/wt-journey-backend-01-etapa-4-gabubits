@@ -1,6 +1,6 @@
 # Instruções para configuração do projeto
 
-Esse guia foi feito para te ajudar no processo de inicialização e configuração do Docker e dos arquivos relacionados ao Knex. Esse guia considera que o usuário já tem o Docker instalado na máquina.
+Esse guia foi feito para te ajudar no processo de inicialização e configuração do Docker e dos arquivos relacionados ao Knex, além de te ajudar no processo de autenticação e como acessar os endpoints protegidos. Esse guia considera que o usuário já tem o Docker instalado na máquina.
 
 1. Instale as dependências do projeto
 
@@ -70,8 +70,44 @@ Para sair do ambiente:
 policia_db=# \quit
 ```
 
-7. Encerre a conexão com o Docker
-   Caso queira encerrar a conexão do Docker sem apagar os dados no banco de dados, execute o comando:
+7. Registre um usuário
+   Para acessar os endpoints da aplicação, é preciso que um token seja passado no corpo da requisição. Portanto, o primeiro passo para isso é o registro de um usuário.
+
+Acesse o endpoint `/auth/register` e digite no corpo da requisição suas informações com esse formato espeficificado no exemplo:
+
+```json
+{
+  "nome": "Fulano",
+  "email": "fulano@gmail.com",
+  "senha": "senhaDeFul@no1"
+}
+```
+
+Esses três atributos devem ser obrigatoriamente passados no corpo da requisição. A sua senha deve conter ao menos um caracter especial, uma letra minúscula, uma letra maiúscula e um número. E não se preocupe, você irá verificar na resposta que a sua senha virá encriptada.
+
+8. Faça login
+   O segundo passo é realizar o login. Para isso, acesse o endpoint `/auth/login` e digite no corpo da requisição suas informações com esse formato especificado no exemplo:
+
+```json
+{
+  "email": "fulano@gmail.com",
+  "senha": "senhaDeFul@no1"
+}
+```
+
+Como resposta, você receberá um JSON com o seu token de acesso, como no exemplo abaixo. Copie esse token de acesso para acessar as outras rotas.
+
+```json
+{
+  "acess_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibm9tZSI6IkdhYnJpZWwiLCJlbWFpbCI6ImdvbWVzZzgyN0BnbWFpbC5jb20iLCJzZW5oYSI6IiQyYiQxMCQ5NmswMU1sbFVWZnpORUZjR1lXbTQuZlJEYmxuRVUxbS9Vc1hKdTNFNUNWVC9rR2ZBUk1iZSIsImlhdCI6MTc1NTk1ODkwMywiZXhwIjoxNzU2MDQ1MzAzfQ.iVZKZIWT9e1rjGsa5zGPst9ow3yPTdIqvdXUJogk3CA"
+}
+```
+
+9. Acesse as rotas internas da aplicação
+   Com o token gerado e válido, agora você está autorizado a acessar as rotas de agentes e casos. Ao acessar uma rota, por exemplo `/casos`, na parte de "Authorization" do seu software testes de rotas de API, selecione a opção "Bearer Token" e coloque o token que você acabou de copiar. Agora só enviar a requisição e você receberá a resposta do banco de dados.
+
+10. Encerre a conexão com o Docker
+    Caso queira encerrar a conexão do Docker sem apagar os dados no banco de dados, execute o comando:
 
 ```bash
 docker compose down
