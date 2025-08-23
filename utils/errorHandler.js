@@ -38,6 +38,30 @@ export class NotFoundRouteError extends APIError {
   }
 }
 
+export class EmailExistsError extends APIError {
+  constructor(errors) {
+    super(400, "Email existente", errors);
+  }
+}
+
+export class UserNotFoundError extends APIError {
+  constructor(errors) {
+    super(404, "Usuário não encontrado", errors);
+  }
+}
+
+export class InvalidPasswordError extends APIError {
+  constructor(errors) {
+    super(401, "Senha inválida", errors);
+  }
+}
+
+export class TokenError extends APIError {
+  constructor(errors) {
+    super(401, "Token inválido", errors);
+  }
+}
+
 export function errorHandler(err, req, res, next) {
   const { status, message, errors } = err;
   res.status(status).send({ status, message, errors });
