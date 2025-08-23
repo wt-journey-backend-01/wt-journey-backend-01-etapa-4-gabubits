@@ -10,7 +10,7 @@ const PORT = 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/agents", agentesRoutes);
+app.use(agentesRoutes);
 app.use("/cases", casosRoutes);
 app.use(authRoutes);
 
