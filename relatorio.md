@@ -1,202 +1,112 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 9 créditos restantes para usar o sistema de feedback AI.
+Você tem 8 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para gabubits:
 
-Nota final: **48.7/100**
+Nota final: **50.5/100**
 
 Olá, gabubits! 👋🚀
 
-Antes de mais nada, parabéns pelo esforço e pelo que você já conseguiu implementar até aqui! 🎉 Seu projeto tem uma estrutura organizada, você aplicou corretamente o uso de middlewares para autenticação, implementou hashing de senhas com bcrypt, e também gerou tokens JWT com expiração, o que é essencial para a segurança da aplicação. Além disso, vi que você se preocupou em validar entradas com Zod, o que é uma ótima prática para garantir a integridade dos dados! 👏
+Primeiramente, parabéns pelo esforço e dedicação em construir uma API REST completa com autenticação, autorização, e integração com PostgreSQL! 🎉 Você conseguiu implementar a parte de usuários, registro, login, logout e exclusão, além de proteger as rotas com JWT — isso é fantástico e já mostra uma boa compreensão dos conceitos de segurança em APIs.
 
 ---
 
-## 🎯 Pontos Fortes que Merecem Destaque
+## 🎯 O que você fez muito bem
 
-- **Estrutura do projeto** está bem alinhada com o esperado, com pastas claras para controllers, repositories, rotas, middlewares e utils.
-- **Middleware de autenticação** (`authMiddleware.js`) está implementado para proteger rotas sensíveis.
-- **Controllers de autenticação** (`authController.js`) fazem o registro, login, logout e exclusão de usuários com o uso correto de bcrypt e JWT.
-- Você usou o **Zod para validação dos dados**, o que ajuda a evitar erros e garante que os dados estejam no formato esperado.
-- O arquivo **INSTRUCTIONS.md** está bem detalhado, orientando sobre o fluxo de autenticação e uso do token JWT.
-- Você implementou corretamente o **hash de senha** e a geração do token JWT com expiração.
-- As rotas de agentes e casos estão protegidas pelo middleware de autenticação, garantindo segurança.
-
-Além disso, parabéns por ter avançado em alguns bônus, como a filtragem por status, busca por casos e agentes, e até a criação do endpoint `/usuarios/me` para retornar dados do usuário autenticado — isso mostra que você está indo além! 🌟
+- A estrutura geral do projeto está muito boa, seguindo o padrão MVC com controllers, repositories, middlewares e rotas bem organizados.
+- A autenticação com JWT está funcionando, com geração do token no login e proteção das rotas de agentes e casos via middleware.
+- A validação dos dados com Zod está bem aplicada, garantindo formatos corretos e mensagens de erro claras.
+- Você usou bcrypt para hash de senhas corretamente, e a senha está sendo armazenada de forma segura.
+- O arquivo `INSTRUCTIONS.md` está bem detalhado e ajuda o usuário a entender como usar o sistema.
+- A exclusão de usuários e logout também estão implementados, mostrando domínio da lógica de autenticação.
+- Os bônus que você alcançou, como a validação rigorosa da senha e a documentação clara, são um diferencial muito positivo! 🌟
 
 ---
 
-## 🕵️‍♂️ Análise dos Pontos que Precisam de Atenção e Como Corrigi-los
+## 🚨 Pontos que precisam de atenção para destravar seu projeto
 
-### 1. **Erro 400 ao criar usuário com campo extra**
+### 1. **Falhas nas operações CRUD de agentes e casos**
 
-Você implementou a validação com Zod para o esquema de usuário, mas parece que o esquema `usuarioRegSchema` está permitindo campos extras no corpo da requisição. Isso faz com que, se o cliente enviar campos que não são esperados, o servidor não retorne erro 400, ou o faça de forma inconsistente.
+Eu notei que as operações de criação, listagem, atualização e exclusão de agentes e casos estão falhando. Isso indica que, apesar de você ter protegido as rotas com o middleware de autenticação, o fluxo de dados nessas rotas não está respondendo conforme esperado.
 
-**Por quê isso é importante?**  
-Permitir campos extras pode abrir brechas para dados inesperados e dificultar a manutenção da API. Além disso, o requisito exige que campos extras causem erro 400.
-
-**Como corrigir?**  
-Na definição do seu schema Zod, você precisa especificar que não são permitidos campos extras, usando `.strict()`:
+**Analisando os repositórios `agentesRepository.js` e `casosRepository.js`, encontrei o seguinte padrão problemático:**
 
 ```js
-import { z } from "zod";
-
-export const usuarioRegSchema = z.object({
-  nome: z.string().min(1, "Nome é obrigatório"),
-  email: z.string().email("Email inválido"),
-  senha: z.string()
-    .min(8, "Senha deve ter no mínimo 8 caracteres")
-    .regex(/[a-z]/, "Senha deve conter letra minúscula")
-    .regex(/[A-Z]/, "Senha deve conter letra maiúscula")
-    .regex(/[0-9]/, "Senha deve conter número")
-    .regex(/[\W_]/, "Senha deve conter caractere especial"),
-}).strict(); // <-- Aqui está o ponto crucial
-```
-
-Com `.strict()`, qualquer campo extra fará a validação falhar, retornando erro 400.
-
-### 2. **Retorno incorreto do token JWT no login**
-
-No seu `authController.js`, você gera o token com:
-
-```js
-const token = jwt.sign(usuario_existe, process.env.JWT_SECRET, {
-  expiresIn: "1d",
-});
-```
-
-E retorna:
-
-```js
-res.status(200).json({
-  acess_token: token,
-});
-```
-
-Aqui o token está sendo retornado com a chave `"acess_token"`, que está correta conforme o enunciado. Porém, recomendo confirmar se a variável de ambiente `JWT_SECRET` está definida corretamente no `.env` e carregada no seu processo (via `dotenv.config()`), pois qualquer problema aqui pode invalidar o token.
-
-Além disso, no payload do JWT, você está passando o objeto completo `usuario_existe`, que inclui a senha hasheada. Isso não é uma boa prática de segurança.
-
-**Como melhorar?**  
-Extraia apenas os dados necessários para o token (exemplo: id, nome e email):
-
-```js
-const payload = {
-  id: usuario_existe.id,
-  nome: usuario_existe.nome,
-  email: usuario_existe.email,
-};
-
-const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1d" });
-```
-
-Isso evita expor a senha no token, mesmo que esteja hasheada.
-
-### 3. **Falha ao atualizar e deletar agentes e casos com IDs inválidos**
-
-Nos seus repositórios (`agentesRepository.js` e `casosRepository.js`), as funções de atualização e exclusão estão assim:
-
-```js
-const result = await db("agentes").where({ id }).update(dados, "*");
-return result.length ? result[0] : undefined;
-```
-
-e
-
-```js
-const result = await db("agentes").where({ id }).del("*");
-return result.length ? true : false;
-```
-
-O problema aqui é que o método `.update()` e `.del()` do Knex retornam o número de linhas afetadas (um número), não um array. Portanto, `result.length` será `undefined` e a condição não funciona como esperado, fazendo com que o retorno seja sempre `undefined` ou `false`, mesmo quando a operação foi bem-sucedida.
-
-**Como corrigir?**
-
-- Para `.update()`, você pode usar `.returning("*")` para obter os dados atualizados (funciona no PostgreSQL).
-- Para `.del()`, o retorno é o número de linhas deletadas.
-
-Exemplo corrigido para `atualizarAgente`:
-
-```js
-export async function atualizarAgente(id, dados) {
-  const result = await db("agentes").where({ id }).update(dados).returning("*");
-  return result.length ? result[0] : undefined;
+// Exemplo do agentesRepository.js
+export async function apagarAgente(id) {
+  const result = await db("agentes").where({ id }).del("*");
+  return result.length ? true : false;
 }
 ```
 
-Para `apagarAgente`:
+Aqui está o problema fundamental: o método `.del()` do Knex **não retorna um array**, mas sim o número de linhas afetadas (um número inteiro). Portanto, acessar `result.length` não faz sentido e sempre será `undefined`, causando que sua função retorne `false` mesmo quando a deleção foi bem sucedida.
+
+O mesmo acontece para os métodos `.update()` e `.insert()` que você usou com o segundo parâmetro `'*'`. Para o PostgreSQL, o `.insert()` e `.update()` aceitam esse parâmetro para retornar as linhas afetadas, mas o `.del()` **não suporta** isso.
+
+---
+
+### Como corrigir?
+
+- Para `.del()`, verifique se o número retornado é maior que zero:
 
 ```js
 export async function apagarAgente(id) {
   const result = await db("agentes").where({ id }).del();
+  return result > 0;  // true se pelo menos uma linha foi deletada
+}
+```
+
+- Para `.update()` e `.insert()`, o retorno com `'*'` funciona no PostgreSQL, mas você precisa garantir que o resultado seja um array e verificar corretamente:
+
+```js
+export async function atualizarAgente(id, dados) {
+  const result = await db("agentes").where({ id }).update(dados, "*");
+  return result.length ? result[0] : undefined;
+}
+```
+
+Esse código está correto, mas vale confirmar se seu banco está configurado para retornar as linhas atualizadas (o que o PostgreSQL faz). Se não estiver retornando, pode ser necessário ajustar a configuração do Knex.
+
+---
+
+### 2. **Métodos `.update()` e `.del()` com retorno esperado**
+
+No seu código, o uso do `.del("*")` está incorreto, pois o `.del()` não suporta o segundo parâmetro para retorno de dados. Isso pode causar falha silenciosa na exclusão.
+
+No `casosRepository.js` também tem o mesmo problema:
+
+```js
+export async function apagarCaso(id) {
+  const result = await db("casos").where({ id }).del("*");
+  return result.length ? true : false;
+}
+```
+
+Corrija para:
+
+```js
+export async function apagarCaso(id) {
+  const result = await db("casos").where({ id }).del();
   return result > 0;
 }
 ```
 
-Essa mesma correção vale para os métodos nos repositórios de `casos` e `usuarios`.
+---
 
-### 4. **Middleware de autenticação e tratamento de erros**
+### 3. **Middleware de autenticação: cuidado com erros de token**
 
-No seu `authMiddleware.js`, você está usando `jwt.verify` com callback, e dentro do callback, se houver erro, você lança uma exceção:
+Seu middleware está bem implementado, mas é importante garantir que o `process.env.JWT_SECRET` esteja carregado corretamente. Caso contrário, a verificação do token falhará.
 
-```js
-jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
-  if (error) {
-    throw new Errors.TokenError({
-      token: "Token inválido",
-    });
-  }
-  req.user = decoded;
-  return next();
-});
-```
+Se o token não for passado no header Authorization ou for inválido, seu middleware joga o erro correto, o que é ótimo.
 
-O problema é que lançar um erro dentro do callback não é capturado pelo `try/catch` externo, pois o callback é assíncrono. Isso pode fazer com que erros de token inválido não sejam tratados corretamente e causem falha silenciosa.
+---
 
-**Como corrigir?**
+### 4. **Migration da tabela `usuarios`**
 
-Use a versão síncrona de `jwt.verify` ou transforme o middleware em assíncrono para usar `try/catch` corretamente.
+Sua migration para a tabela `usuarios` está correta, mas o campo `id` é um inteiro autoincremento. Isso está alinhado com o que o repositório espera.
 
-Exemplo usando versão síncrona:
-
-```js
-export function authMiddleware(req, res, next) {
-  try {
-    const tokenHeader = req.headers.authorization;
-    const token = tokenHeader && tokenHeader.split(" ")[1];
-
-    if (!token) {
-      throw new Errors.TokenError({ token: "Token não encontrado" });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.user = decoded;
-    next();
-  } catch (e) {
-    if (e.name === "JsonWebTokenError" || e.name === "TokenExpiredError") {
-      return next(new Errors.TokenError({ token: "Token inválido ou expirado" }));
-    }
-    next(e);
-  }
-}
-```
-
-Assim o erro será capturado e passado para o middleware de erro corretamente, retornando o status 401 esperado.
-
-### 5. **Migration de rollback vazia**
-
-No arquivo `db/migrations/20250822143501_usuarios.js`, você criou a migration para a tabela `usuarios`, mas o método `down` está vazio:
-
-```js
-export async function down(knex) {}
-```
-
-Isso significa que não há como desfazer a criação da tabela, o que pode causar problemas em ambientes de testes e desenvolvimento.
-
-**Como corrigir?**
-
-Implemente o método `down` para dropar a tabela:
+Só lembre-se de implementar a função `down` para que a migration possa ser revertida, isso é uma boa prática:
 
 ```js
 export async function down(knex) {
@@ -204,49 +114,69 @@ export async function down(knex) {
 }
 ```
 
-Isso ajuda a manter a consistência e permite rodar `knex migrate:rollback` quando necessário.
+---
+
+### 5. **Resposta do endpoint de registro de usuário**
+
+No `authController.js`, após criar o usuário, você está respondendo com a senha hasheada no corpo da resposta:
+
+```js
+res.status(201).json(body_parse.data);
+```
+
+Isso pode expor a senha hasheada, o que não é uma boa prática. Melhor retornar apenas os dados públicos do usuário, omitindo a senha:
+
+```js
+const { senha, ...usuarioPublico } = body_parse.data;
+res.status(201).json(usuarioPublico);
+```
 
 ---
 
-## ✨ Recomendações de Aprendizado
+### 6. **Rota de exclusão de usuário**
 
-Para te ajudar a entender e corrigir os pontos acima, recomendo fortemente os seguintes vídeos:
+Na sua rota:
 
-- **Autenticação e Segurança com JWT e bcrypt:**  
-  [Esse vídeo, feito pelos meus criadores, fala muito bem sobre os conceitos básicos e fundamentais da cibersegurança.](https://www.youtube.com/watch?v=Q4LQOfYwujk)
+```js
+router.delete("/users/:id", authController.apagarUsuario);
+```
 
-- **JWT na prática:**  
-  [Vídeo excelente para entender como gerar, validar e usar tokens JWT corretamente.](https://www.youtube.com/watch?v=keS0JWOypIU)
-
-- **Uso de bcrypt e JWT juntos:**  
-  [Esse vídeo explica detalhadamente o uso combinado de bcrypt para hashing e JWT para autenticação.](https://www.youtube.com/watch?v=L04Ln97AwoY)
-
-- **Knex Query Builder - Atualizações e Deleções:**  
-  [Guia detalhado do Knex Query Builder para entender os métodos `.update()`, `.del()`, e `.returning()`.](https://www.youtube.com/watch?v=GLwHSs7t3Ns&t=4s)
-
-- **Validação com Zod e `.strict()`:**  
-  Embora não tenha um vídeo específico, a documentação oficial do Zod explica o uso do `.strict()`. Vale a pena dar uma olhada aqui: https://github.com/colinhacks/zod#strict-validation
+O padrão do projeto sugere que as rotas de usuários fiquem sob `/usuarios` para manter consistência no idioma (português). Isso não é um erro fatal, mas manter a consistência ajuda a evitar confusão.
 
 ---
 
-## 📋 Resumo dos Pontos para Focar
+## 📚 Recomendações de aprendizado para você
 
-- Use `.strict()` no schema Zod para impedir campos extras no registro de usuários.
-- Ajuste os métodos `.update()` e `.del()` nos repositories para usar `.returning()` e verificar o número de linhas afetadas corretamente.
-- Corrija o middleware de autenticação para capturar erros JWT de forma síncrona e evitar erros não tratados.
-- No JWT, evite incluir a senha do usuário no payload do token.
-- Implemente o método `down` nas migrations para garantir rollback.
-- Confirme que a variável de ambiente `JWT_SECRET` está corretamente configurada e carregada.
+- Para entender melhor o funcionamento do Knex e o retorno dos métodos `.del()`, `.update()` e `.insert()`, recomendo fortemente este vídeo:  
+  https://www.youtube.com/watch?v=GLwHSs7t3Ns&t=4s  
+  Ele explica detalhadamente como usar o Knex Query Builder, incluindo o retorno esperado de cada operação.
+
+- Para aprimorar a autenticação JWT e o uso do bcrypt, veja este vídeo excelente, feito pelos meus criadores, que explica os fundamentos da cibersegurança, JWT e hashing:  
+  https://www.youtube.com/watch?v=Q4LQOfYwujk
+
+- Para fortalecer sua arquitetura MVC e organização de projetos Node.js, dê uma olhada neste conteúdo:  
+  https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s
+
+- Por fim, para garantir que seu ambiente Docker e Knex estejam configurados corretamente, este vídeo pode ajudar:  
+  https://www.youtube.com/watch?v=uEABDBQV-Ek&t=1s
 
 ---
 
-Gabubits, seu projeto está no caminho certo e com algumas correções ficará ainda mais sólido e profissional! 🚀 Continue praticando essas boas práticas, porque segurança e organização são fundamentais para APIs robustas.
+## ✅ Resumo rápido para focar na próxima rodada
 
-Se precisar, volte aos vídeos que recomendei para aprofundar seu entendimento e não hesite em experimentar as correções no seu código.
+- [ ] Corrija o uso do `.del("*")` para `.del()` e ajuste a verificação do resultado para número maior que zero.
+- [ ] Confirme que o `.update()` e `.insert()` estão retornando os dados conforme esperado, e trate o retorno corretamente.
+- [ ] Implemente o método `down` nas migrations para permitir rollback.
+- [ ] Evite retornar a senha (mesmo que hasheada) na resposta do registro de usuário.
+- [ ] Considere padronizar as rotas para manter consistência semântica (ex: `/usuarios`).
+- [ ] Verifique se a variável de ambiente `JWT_SECRET` está corretamente configurada e carregada.
+- [ ] Continue usando o Zod para validação, pois está muito bem aplicado.
 
-Você está fazendo um trabalho incrível, continue assim! 💪✨
+---
 
-Um abraço do seu Code Buddy! 🤖💙
+Gabubits, você está no caminho certo e já tem uma base muito sólida! 💪✨ Com esses ajustes, sua API vai ficar ainda mais robusta, segura e profissional. Se precisar, volte aqui para tirar dúvidas — estou torcendo pelo seu sucesso! 🚀
+
+Um abraço e até a próxima revisão! 👨‍💻🔥
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
