@@ -13,16 +13,16 @@ export function authMiddleware(req, res, next) {
       });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
-      if (error) {
-        throw new Errors.TokenError({
-          token: "Token inválido",
-        });
-      }
-      req.user = decoded;
-      return next();
-    });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = decoded;
+    next();
   } catch (e) {
+    if (e.name === "JsonWebTokenError" || e.name === "TokenExpiredError") {
+      return next(
+        new Errors.TokenError({ token: "Token inválido ou expirado" })
+      );
+    }
     next(e);
   }
 }

@@ -33,12 +33,12 @@ export async function registrarUsuario(req, res, next) {
 
     const hashedPassword = await bcrypt.hash(body_parse.data.senha, 10);
 
-    const usuario_criado = await usuariosRepository.criarUsuario({
+    await usuariosRepository.criarUsuario({
       ...body_parse.data,
       senha: hashedPassword,
     });
 
-    res.status(201).json(usuario_criado);
+    res.status(201).json(body_parse.data);
   } catch (e) {
     next(e);
   }
