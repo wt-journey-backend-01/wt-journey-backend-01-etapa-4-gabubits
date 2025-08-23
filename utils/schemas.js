@@ -14,7 +14,7 @@ const baseIdSchema = (id = "id") => ({
 
 export const idSchema = z.object(baseIdSchema());
 export const agenteIdSchema = z.object(baseIdSchema("agente_id"));
-export const casoIdSchema = z.object(baseIdSchema("id"));
+export const casoIdSchema = z.object(baseIdSchema());
 
 const baseStringSchema = (fieldName) => ({
   [fieldName]: z
@@ -65,6 +65,43 @@ const baseEnumSchema = (fieldName, values) => ({
     ),
 });
 
+const baseEmailSchema = (fieldName) => ({
+  [fieldName]: z.email({
+    error: (issue) => {
+      if (!issue.input) return `${fieldName} é um campo obrigatório.`;
+      if (issue.code === "invalid_type")
+        return `${fieldName} é um campo de tipo string.`;
+      if (issue.code === "invalid_format")
+        return `${fieldName} não representa um email válido.`;
+    },
+  }),
+});
+
+const basePasswordSchema = (fieldName) => ({
+  [fieldName]: z
+    .string({
+      error: (issue) => {
+        if (!issue.input) return `${fieldName} é um campo obrigatório.`;
+        if (issue.code === "invalid_type")
+          return `${fieldName} é um campo de tipo string`;
+      },
+    })
+    .min(8, `${fieldName} deve ter, no mínimo, 8 caracteres.`)
+    .regex(
+      /^(?=.*[a-z]).+$/gm,
+      `${fieldName} deve ter, no mínimo, uma letra minúscula.`
+    )
+    .regex(
+      /^(?=.*[A-Z]).+$/gm,
+      `${fieldName} deve ter, no mínimo, uma letra maiúscula.`
+    )
+    .regex(/^(?=.*\d).+$/gm, `${fieldName} deve ter, no mínimo, um número.`)
+    .regex(
+      /^(?=.*[^A-Za-z0-9]).+$/gm,
+      `${fieldName} deve ter, no mínimo, um caracter especial.`
+    ),
+});
+
 export const statusSchema = z.object(
   baseEnumSchema("status", ["aberto", "solucionado"])
 );
@@ -102,6 +139,33 @@ export const casoSchema = z.object(
         },
       })
       .min(1, "agente_id deve ser um número inteiro positivo"),
+  },
+  {
+    error: (issue) => {
+      if (issue.code === "invalid_type")
+        return "O corpo de requisição deve ser um OBJETO.";
+    },
+  }
+);
+
+export const usuarioRegSchema = z.object(
+  {
+    ...baseStringSchema("nome"),
+    ...baseEmailSchema("email"),
+    ...basePasswordSchema("senha"),
+  },
+  {
+    error: (issue) => {
+      if (issue.code === "invalid_type")
+        return "O corpo de requisição deve ser um OBJETO.";
+    },
+  }
+);
+
+export const usuarioLoginSchema = z.object(
+  {
+    ...baseEmailSchema("email"),
+    ...basePasswordSchema("senha"),
   },
   {
     error: (issue) => {
