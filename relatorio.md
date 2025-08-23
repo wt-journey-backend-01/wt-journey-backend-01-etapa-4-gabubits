@@ -1,121 +1,112 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 6 créditos restantes para usar o sistema de feedback AI.
+Você tem 5 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para gabubits:
 
-Nota final: **56.7/100**
+Nota final: **59.9/100**
 
 Olá, gabubits! 👋🚀
 
-Antes de mais nada, parabéns pelo empenho e por ter conseguido implementar toda a parte de usuários com autenticação JWT, hashing de senha e exclusão de usuários! 🎉 Isso é fundamental para qualquer aplicação real e você fez muito bem essa parte. Também vi que você criou o middleware de autenticação e aplicou nas rotas protegidas, o que é um passo super importante para garantir segurança na API. Muito bom! 👏
+Primeiramente, parabéns pelo esforço e por ter avançado tanto no seu projeto! 🎉 Você fez um ótimo trabalho implementando a autenticação com JWT, hashing de senha com bcrypt e estruturando a aplicação com uma arquitetura clara e organizada. Além disso, os endpoints de usuários (registro, login, logout e exclusão) estão funcionando bem, o que é uma base essencial para a segurança do seu sistema. 👏👏
 
 ---
 
-## Vamos agora analisar juntos os pontos que precisam de atenção para você alcançar a excelência nessa etapa! 💪
-
-### 1. Estrutura de Diretórios e Organização Geral
-
-Sua estrutura está muito próxima do esperado, parabéns por isso! 👏 Só reforço que é fundamental manter os arquivos e pastas exatamente como o desafio pede, pois isso ajuda a organização do projeto e facilita a manutenção e testes.
-
-Você tem:
-
-- `routes/authRoutes.js`, `controllers/authController.js` e `repositories/usuariosRepository.js` — perfeito, tudo no lugar!
-- Middleware `authMiddleware.js` também está correto.
-- A pasta `db` com migrations, seeds e db.js está bem organizada.
-
-Então, aqui está tudo certo, continue assim! 👍
+### Vamos agora analisar juntos os pontos que precisam de atenção para você destravar ainda mais funcionalidades e melhorar sua nota, combinado? 😉
 
 ---
 
-### 2. Problemas com os Endpoints de Agentes e Casos (CRUD e Filtros)
+## 1. Estrutura de Diretórios — Está quase perfeita! 📂
 
-Eu percebi que muitos endpoints relacionados a **agentes** e **casos** estão falhando, principalmente nas operações de criação, listagem, busca, atualização e remoção. Isso pode ter algumas causas que vou detalhar para você:
+Você seguiu muito bem a estrutura esperada, com pastas organizadas para controllers, repositories, routes, middlewares, db, utils, etc. Isso é fundamental para manter o projeto escalável e fácil de manter.
 
-#### a. Uso incorreto dos middlewares encadeados nas rotas de agentes
+Só fique atento para sempre manter os arquivos novos (como `authRoutes.js`, `authController.js`, `usuariosRepository.js` e `authMiddleware.js`) exatamente nas pastas indicadas — no seu caso, estão corretos! 👍
 
-No arquivo `routes/agentesRoutes.js`, você está usando vários middlewares encadeados nas rotas GET, por exemplo:
+---
+
+## 2. Autenticação e Proteção das Rotas — O que encontrei
+
+### ✅ Você aplicou o middleware `authMiddleware` nas rotas de agentes e casos, garantindo que apenas usuários autenticados consigam acessá-las.
 
 ```js
-router.get(
-  "/agentes",
-  authMiddleware,
-  agentesController.obterAgentes,
-  agentesController.obterAgentesCargo,
-  agentesController.obterAgentesSort
-);
+// Exemplo do agentesRoutes.js
+router.get("/agents", authMiddleware, agentesController.obterAgentes);
 ```
 
-**Por que isso pode causar problemas?**
+### ⚠️ Porém, percebi que:
 
-- O Express executa os middlewares em sequência, e cada um deve decidir se responde ou chama `next()` para o próximo.
-- No seu caso, `obterAgentes` responde com `res.status(200).json(dados)` se não houver query, e chama `next()` caso contrário.
-- Porém, se `obterAgentes` responde, a resposta já foi enviada e o Express não deve continuar a executar os outros middlewares.
-- Se algum middleware posterior também tentar enviar resposta, isso gera erro "Can't set headers after they are sent", ou comportamentos inesperados.
-- Além disso, o fluxo fica confuso e difícil de manter.
-
-**Como resolver?**
-
-- Use apenas um middleware controlador para cada rota, que faça toda a lógica de decisão internamente.
-- Exemplo: no controlador de `/agentes`, trate as queries `cargo` e `sort` dentro da mesma função, retornando o resultado correto conforme a query passada.
-
-Assim, o código ficaria algo assim:
+- Em `server.js`, as rotas estão sendo usadas com caminhos inconsistentes:
 
 ```js
-export async function obterAgentes(req, res, next) {
-  try {
-    if (req.query.cargo) {
-      const agentes_encontrados = await agentesRepository.obterAgentesDoCargo(req.query.cargo);
-      return res.status(200).json(agentes_encontrados);
-    }
-    if (req.query.sort) {
-      const sort = Number(req.query.sort);
-      if (![1, -1].includes(sort)) {
-        return res.status(400).json({ error: "Parâmetro 'sort' inválido" });
-      }
-      const agentes_ordenados = sort === 1
-        ? await agentesRepository.obterAgentesOrdenadosPorDataIncorpAsc()
-        : await agentesRepository.obterAgentesOrdenadosPorDataIncorpDesc();
-      return res.status(200).json(agentes_ordenados);
-    }
-    // Caso não tenha query, retorna todos
-    const dados = await agentesRepository.obterTodosAgentes();
-    res.status(200).json(dados);
-  } catch (e) {
-    next(e);
-  }
+app.use(agentesRoutes); // agentesRoutes usa /agents, mas aqui não há prefixo
+app.use("/cases", casosRoutes); // casosRoutes usa "/" e "/:id", mas está prefixado como /cases
+app.use(authRoutes); // authRoutes usa /auth/register, etc.
+```
+
+**Por que isso pode ser um problema?**
+
+- No arquivo `routes/agentesRoutes.js`, você definiu as rotas começando com `/agents`, mas no `server.js` você usou `app.use(agentesRoutes)` sem prefixar, o que significa que o caminho completo será `/agents`.
+
+- Já para `casosRoutes.js`, as rotas são definidas com `/` e `/search`, mas no `server.js` você usou o prefixo `/cases`. Isso pode causar confusão, pois o enunciado e o restante do código usam `/casos` (em português) e não `/cases` (em inglês).
+
+**Como corrigir:**
+
+- Padronize os nomes das rotas para o português, conforme o enunciado, para evitar confusão e garantir que os endpoints estejam corretos para os testes e para o uso da API.
+
+- No `server.js`, prefira usar:
+
+```js
+app.use("/agentes", agentesRoutes);
+app.use("/casos", casosRoutes);
+app.use(authRoutes);
+```
+
+- E nas rotas, defina os caminhos relativos, por exemplo em `agentesRoutes.js`:
+
+```js
+router.get("/", authMiddleware, agentesController.obterAgentes);
+router.get("/:id", authMiddleware, agentesController.obterUmAgente);
+// etc.
+```
+
+Assim, o caminho completo será `/agentes/` e `/agentes/:id`, etc.
+
+---
+
+## 3. Repositórios — Retorno de update e delete
+
+Nos seus repositórios `agentesRepository.js` e `casosRepository.js`, notei que você está usando `.update(dados, "*")` e `.del("*")` e esperando um array de resultados para retornar o objeto atualizado ou booleano.
+
+```js
+export async function atualizarAgente(id, dados) {
+  const result = await db("agentes").where({ id }).update(dados, "*");
+  return result.length ? result[0] : undefined;
 }
-```
 
-E na rota:
-
-```js
-router.get("/agentes", authMiddleware, agentesController.obterAgentes);
-```
-
-Isso evita múltiplos middlewares para a mesma rota, evitando conflitos.
-
-**Mesma dica vale para `/casos` e seus filtros** — unifique os middlewares de filtros em um só controlador.
-
----
-
-#### b. Retorno incorreto em métodos de atualização e deleção no repositório
-
-No arquivo `repositories/agentesRepository.js`, notei que você está usando:
-
-```js
-// DELETE /agentes/:id
 export async function apagarAgente(id) {
   const result = await db("agentes").where({ id }).del("*");
   return result.length ? true : false;
 }
 ```
 
-O problema aqui é que o método `.del()` do Knex retorna o número de linhas deletadas, que é um número (ex: 0 ou 1), **não** um array. Portanto, `result.length` é `undefined`, e sua função sempre retorna `false`, mesmo que tenha deletado.
+**Por que isso pode estar causando problemas?**
 
-**Como corrigir?**
+- O método `.update()` em algumas versões do Knex com PostgreSQL retorna o número de linhas afetadas, e não um array com os registros atualizados, a menos que você use `.returning("*")`.
 
-Altere para:
+- O método `.del()` retorna o número de linhas deletadas, não um array.
+
+**Como corrigir:**
+
+- Use `.returning("*")` para receber os dados atualizados:
+
+```js
+export async function atualizarAgente(id, dados) {
+  const result = await db("agentes").where({ id }).update(dados).returning("*");
+  return result.length ? result[0] : undefined;
+}
+```
+
+- Para delete, verifique se o número de linhas deletadas é maior que zero:
 
 ```js
 export async function apagarAgente(id) {
@@ -124,139 +115,146 @@ export async function apagarAgente(id) {
 }
 ```
 
-Mesma correção vale para os métodos de deleção em `casosRepository.js` e `usuariosRepository.js`.
+Esse ajuste garante que você está verificando corretamente se a operação foi bem sucedida e retorna os dados esperados.
 
 ---
 
-#### c. Atualização com `update` e retorno do registro atualizado
+## 4. Validação e Tratamento de Erros — Muito bem implementado!
 
-Nos métodos de atualização (`atualizarAgente`, `atualizarCaso`), você usa:
+Você usou o Zod para validar os dados, o que é uma ótima prática. Também criou erros customizados para formatar mensagens amigáveis. Isso ajuda muito na manutenção e na experiência do usuário.
+
+---
+
+## 5. Autenticação JWT — Quase perfeito!
+
+No `authController.js`, você faz o hash da senha com bcrypt e gera o JWT corretamente.
 
 ```js
-const result = await db("agentes").where({ id }).update(dados, "*");
-return result.length ? result[0] : undefined;
+const hashedPassword = await bcrypt.hash(body_parse.data.senha, 10);
 ```
 
-O método `.update()` do Knex retorna o número de linhas afetadas, não um array. O segundo argumento `"*"` pode funcionar em alguns bancos, mas o retorno esperado é o número.
+E no login:
 
-**Como resolver?**
+```js
+const token = jwt.sign(usuario_existe, process.env.JWT_SECRET, {
+  expiresIn: "1d",
+});
+```
 
-- Após atualizar, faça uma nova consulta para buscar o registro atualizado e retornar.
+**Pequena sugestão:**
 
-Exemplo:
+- No `jwt.sign()`, evite passar o objeto inteiro do usuário (que inclui a senha hasheada). Em vez disso, crie um payload com os dados essenciais, por exemplo:
+
+```js
+const payload = {
+  id: usuario_existe.id,
+  nome: usuario_existe.nome,
+  email: usuario_existe.email,
+};
+
+const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1d" });
+```
+
+Isso evita que informações sensíveis sejam expostas no token JWT, mesmo que esteja assinado.
+
+---
+
+## 6. Middleware de autenticação — Muito bom!
+
+Seu middleware `authMiddleware.js` está correto e faz a validação do token JWT, adicionando `req.user` para uso posterior. Isso garante que as rotas protegidas só sejam acessadas com token válido.
+
+---
+
+## 7. Documentação — INSTRUCTIONS.md
+
+Seu arquivo está muito bem detalhado e claro, explicando passo a passo como configurar o projeto, rodar o Docker, fazer migrations, seeds, registrar e logar usuários, e acessar rotas protegidas com token JWT.
+
+---
+
+## 8. Pontos que precisam de ajustes para destravar os endpoints de agentes e casos
+
+- **Rotas:** Padronize os nomes (use `/agentes` e `/casos` em vez de `/agents` e `/cases`), e ajuste os prefixos no `server.js` para refletir isso.
+
+- **Repositórios:** Corrija o uso do `.update()` e `.del()` para usar `.returning("*")` e verificar o número de linhas afetadas corretamente.
+
+- **JWT:** Evite incluir a senha no payload do token.
+
+---
+
+## Exemplos práticos para você:
+
+### Ajuste no `server.js`:
+
+```js
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use("/agentes", agentesRoutes);
+app.use("/casos", casosRoutes);
+app.use(authRoutes);
+```
+
+### Ajuste em `routes/agentesRoutes.js`:
+
+```js
+const router = express.Router();
+
+router.get("/", authMiddleware, agentesController.obterAgentes);
+router.get("/:id", authMiddleware, agentesController.obterUmAgente);
+router.get("/:id/casos", authMiddleware, agentesController.obterCasosDoAgente);
+router.post("/", authMiddleware, agentesController.criarAgente);
+router.put("/:id", authMiddleware, agentesController.atualizarAgente);
+router.patch("/:id", authMiddleware, agentesController.atualizarAgente);
+router.delete("/:id", authMiddleware, agentesController.apagarAgente);
+
+export default router;
+```
+
+### Ajuste no repositório `agentesRepository.js`:
 
 ```js
 export async function atualizarAgente(id, dados) {
-  const count = await db("agentes").where({ id }).update(dados);
-  if (count === 0) return undefined;
-  return await db("agentes").where({ id }).first();
+  const result = await db("agentes").where({ id }).update(dados).returning("*");
+  return result.length ? result[0] : undefined;
+}
+
+export async function apagarAgente(id) {
+  const result = await db("agentes").where({ id }).del();
+  return result > 0;
 }
 ```
 
-Isso garante que você retorne o objeto atualizado para o cliente.
+---
+
+## Recursos recomendados para você aprofundar:
+
+- Para entender melhor o uso do Knex com `.update()` e `.del()`, veja este guia oficial:  
+https://www.youtube.com/watch?v=GLwHSs7t3Ns&t=4s
+
+- Para aprimorar sua arquitetura MVC e organização de código:  
+https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s
+
+- Para reforçar conceitos de autenticação e JWT, recomendo muito este vídeo feito pelos meus criadores:  
+https://www.youtube.com/watch?v=Q4LQOfYwujk  
+https://www.youtube.com/watch?v=keS0JWOypIU
 
 ---
 
-### 3. Migrations e Seeds
+## Resumo rápido para você focar:
 
-Sua migration para a tabela `usuarios` está correta, parabéns! 🎉
-
-Porém, percebi que o método `down` está vazio:
-
-```js
-export async function down(knex) {}
-```
-
-É uma boa prática sempre implementar o método `down` para desfazer as migrations, assim você pode rodar `knex migrate:rollback` sem problemas.
-
-Exemplo para `usuarios`:
-
-```js
-export async function down(knex) {
-  await knex.schema.dropTableIfExists("usuarios");
-}
-```
-
-Isso também vale para a outra migration de `agentes` e `casos`.
+- 🔄 Padronize os nomes das rotas para português e ajuste os prefixos no `server.js`.  
+- 🛠️ Ajuste os métodos `.update()` e `.del()` nos repositories para usar `.returning("*")` e verificar o número correto de linhas afetadas.  
+- 🔐 No JWT, envie apenas os dados essenciais no payload, evitando a senha.  
+- 📚 Continue usando o Zod para validação e os erros customizados, isso está ótimo!  
+- 📄 Mantenha a documentação clara e detalhada como está.  
 
 ---
 
-### 4. Documentação no INSTRUCTIONS.md
+Gabubits, você está no caminho certo, só precisa desses pequenos ajustes para destravar o funcionamento completo da API e garantir segurança e consistência. Continue firme, que o progresso é garantido! 💪🔥
 
-Seu arquivo `INSTRUCTIONS.md` está muito bem detalhado, parabéns! 👏
+Se precisar, volte aqui para tirar dúvidas, estou aqui para te ajudar! 🚀✨
 
-Uma pequena correção: você mencionou que o token deve ser enviado no corpo da requisição, mas o correto é enviá-lo no header `Authorization` com o esquema `Bearer <token>`, como você já explicou depois.
-
-Sugiro deixar claro que:
-
-- O token JWT deve ser enviado no header `Authorization`, exemplo:
-
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-Isso evita confusão para quem for consumir a API.
-
----
-
-### 5. Outros pontos importantes
-
-- No arquivo `authController.js`, quando você retorna o usuário após registro, você está enviando a senha hasheada no JSON:
-
-```js
-res.status(201).json(body_parse.data);
-```
-
-Aqui, `body_parse.data.senha` é a senha original, não a hasheada. Além disso, por segurança, **não envie a senha no JSON de resposta**, mesmo que esteja hasheada.
-
-Sugestão:
-
-```js
-const usuarioCriado = await usuariosRepository.criarUsuario({
-  ...body_parse.data,
-  senha: hashedPassword,
-});
-
-// Remova a senha antes de enviar
-const { senha, ...usuarioSemSenha } = usuarioCriado;
-
-res.status(201).json(usuarioSemSenha);
-```
-
-Assim você evita expor a senha mesmo que hash.
-
----
-
-## Resumo dos principais pontos para focar:
-
-- ✅ Parabéns pela implementação da autenticação, hashing e JWT! Você está no caminho certo.
-- ⚠️ Refatore os controladores para evitar múltiplos middlewares encadeados que enviam respostas na mesma rota (ex: `/agentes` e `/casos`).
-- ⚠️ Corrija os métodos de deleção e atualização nos repositórios para lidar corretamente com os retornos do Knex (`del()` e `update()`).
-- ⚠️ Implemente os métodos `down` nas migrations para garantir rollback seguro.
-- ⚠️ No registro de usuário, não envie a senha (mesmo que hasheada) na resposta da API.
-- ⚠️ Ajuste a documentação para reforçar que o token JWT deve ser enviado no header `Authorization` e não no corpo da requisição.
-
----
-
-## Recomendações de estudo para você:
-
-- Para entender melhor o uso do Knex e o que cada método retorna, veja este vídeo:  
-  https://www.youtube.com/watch?v=GLwHSs7t3Ns&t=4s  
-  (Guia detalhado do Knex Query Builder)
-
-- Para aprimorar a arquitetura dos seus controladores e middlewares, recomendo este vídeo sobre boas práticas MVC em Node.js:  
-  https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s
-
-- Para aprofundar sua compreensão sobre autenticação JWT e segurança com bcrypt, veja este vídeo feito pelos meus criadores, que explica muito bem esses conceitos:  
-  https://www.youtube.com/watch?v=Q4LQOfYwujk
-
----
-
-Gabubits, seu código tem uma base muito boa e com esses ajustes você vai destravar todo o potencial da sua API! 🚀 Continue firme, aprendendo com cada detalhe e buscando sempre a clareza e segurança no código. Estou aqui torcendo pelo seu sucesso! 💪🔥
-
-Se precisar, só chamar para mais ajuda! 😉
-
-Um abraço e bons códigos! 👨‍💻👩‍💻✨
+Um abraço e bons códigos! 👨‍💻👩‍💻💙
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
