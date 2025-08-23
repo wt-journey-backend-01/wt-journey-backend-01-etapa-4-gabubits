@@ -6,29 +6,27 @@ const router = express.Router();
 
 router.get(
   "/",
-  authMiddleware,
   casosController.obterCasos,
   casosController.obterCasosAgenteId,
   casosController.obterCasosStatus
 );
 
-router.get("/:id/agente", authMiddleware, casosController.obterAgenteDoCaso);
+router.get("/:id/agente", casosController.obterAgenteDoCaso);
 
 router.get(
   "/search",
-  authMiddleware,
   casosController.paginaSearch,
   casosController.pesquisarCasos
 );
 
-router.get("/:id", authMiddleware, casosController.obterUmCaso);
+router.get("/:id", casosController.obterUmCaso);
 
-router.post("/", authMiddleware, casosController.criarCaso);
+router.post("/", casosController.criarCaso);
 
-router.put("/:id", authMiddleware, casosController.atualizarCaso);
+router.put("/:id", casosController.atualizarCaso);
 
-router.patch("/:id", authMiddleware, casosController.atualizarCaso);
+router.patch("/:id", casosController.atualizarCaso);
 
-router.delete("/:id", authMiddleware, casosController.apagarCaso);
+router.delete("/:id", casosController.apagarCaso);
 
 export default router;

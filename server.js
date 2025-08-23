@@ -3,6 +3,7 @@ import agentesRoutes from "./routes/agentesRoutes.js";
 import casosRoutes from "./routes/casosRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import { errorHandler, NotFoundRouteError } from "./utils/errorHandler.js";
+import { authMiddleware } from "./middlewares/authMiddleware.js";
 
 const app = express();
 const PORT = 3000;
@@ -10,8 +11,9 @@ const PORT = 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use(authMiddleware);
 app.use(agentesRoutes);
-app.use("/cases", casosRoutes);
+app.use("/casos", casosRoutes);
 app.use(authRoutes);
 
 app.use((req, res, next) => {
