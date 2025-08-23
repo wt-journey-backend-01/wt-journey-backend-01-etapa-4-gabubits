@@ -1,6 +1,7 @@
 import express from "express";
 import agentesRoutes from "./routes/agentesRoutes.js";
 import casosRoutes from "./routes/casosRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import { errorHandler, NotFoundRouteError } from "./utils/errorHandler.js";
 
 const app = express();
@@ -11,6 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/agentes", agentesRoutes);
 app.use("/casos", casosRoutes);
+app.use(authRoutes);
 
 app.use((req, res, next) => {
   next(
