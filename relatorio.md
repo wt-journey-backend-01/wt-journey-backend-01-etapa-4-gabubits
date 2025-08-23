@@ -1,112 +1,130 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 8 créditos restantes para usar o sistema de feedback AI.
+Você tem 7 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para gabubits:
 
-Nota final: **50.5/100**
+Nota final: **59.9/100**
 
-Olá, gabubits! 👋🚀
+# Feedback para gabubits 🚓✨
 
-Primeiramente, parabéns pelo esforço e dedicação em construir uma API REST completa com autenticação, autorização, e integração com PostgreSQL! 🎉 Você conseguiu implementar a parte de usuários, registro, login, logout e exclusão, além de proteger as rotas com JWT — isso é fantástico e já mostra uma boa compreensão dos conceitos de segurança em APIs.
-
----
-
-## 🎯 O que você fez muito bem
-
-- A estrutura geral do projeto está muito boa, seguindo o padrão MVC com controllers, repositories, middlewares e rotas bem organizados.
-- A autenticação com JWT está funcionando, com geração do token no login e proteção das rotas de agentes e casos via middleware.
-- A validação dos dados com Zod está bem aplicada, garantindo formatos corretos e mensagens de erro claras.
-- Você usou bcrypt para hash de senhas corretamente, e a senha está sendo armazenada de forma segura.
-- O arquivo `INSTRUCTIONS.md` está bem detalhado e ajuda o usuário a entender como usar o sistema.
-- A exclusão de usuários e logout também estão implementados, mostrando domínio da lógica de autenticação.
-- Os bônus que você alcançou, como a validação rigorosa da senha e a documentação clara, são um diferencial muito positivo! 🌟
+Olá, gabubits! Primeiro, parabéns pelo esforço e pelo código que você já entregou! 🎉 Você fez um ótimo trabalho implementando a autenticação com JWT, hashing de senhas com bcrypt e protegendo as rotas de agentes e casos com middleware. Vi que as funcionalidades de usuários (registro, login, logout, exclusão) estão bem encaminhadas e funcionando corretamente, o que é uma base fundamental para a segurança da sua API. 👏
 
 ---
 
-## 🚨 Pontos que precisam de atenção para destravar seu projeto
+## O que está funcionando muito bem ✅
 
-### 1. **Falhas nas operações CRUD de agentes e casos**
+- A estrutura geral do projeto está organizada conforme o esperado, com pastas bem definidas para controllers, repositories, routes, middlewares, db e utils.
+- Implementação correta do registro e login de usuários, com validação de dados usando Zod e hashing de senha com bcrypt.
+- Geração de token JWT com expiração configurada e uso do segredo via variável de ambiente `.env`.
+- Middleware de autenticação que valida o token JWT e adiciona os dados do usuário autenticado no `req.user`.
+- Rotas de agentes e casos protegidas pelo middleware, garantindo acesso apenas a usuários autenticados.
+- Tratamento de erros customizado com classes específicas e mensagens claras.
+- Documentação clara no `INSTRUCTIONS.md` para configuração, uso do banco, registro, login e uso do token JWT.
+- Você já implementou algumas funcionalidades bônus, como a filtragem simples por cargo e status, e o endpoint de logout.
 
-Eu notei que as operações de criação, listagem, atualização e exclusão de agentes e casos estão falhando. Isso indica que, apesar de você ter protegido as rotas com o middleware de autenticação, o fluxo de dados nessas rotas não está respondendo conforme esperado.
+---
 
-**Analisando os repositórios `agentesRepository.js` e `casosRepository.js`, encontrei o seguinte padrão problemático:**
+## Pontos de atenção para destravar sua API e alcançar a excelência 🚨
+
+### 1. **Falha nas operações CRUD de agentes e casos (criação, listagem, atualização e exclusão)**
+
+Eu percebi que as rotas protegidas de agentes (`/agents`) e casos (`/cases`) estão configuradas para usar o `authMiddleware`, o que está correto. Porém, as operações de criação, atualização e exclusão dessas entidades estão falhando, assim como as listagens, com erros relacionados a status code 401 (não autorizado) e 400 (formato incorreto).
+
+**Causa raiz provável:**
+
+- Apesar do middleware estar presente, o token JWT pode não estar sendo passado corretamente no header `Authorization` nas requisições. Isso faz com que o middleware lance erro de token não encontrado.
+- Outro ponto importante é que as rotas de agentes estão prefixadas com `/agents`, mas na documentação e instruções o esperado é `/agentes` (em português). Essa inconsistência pode causar confusão e falha na chamada correta dos endpoints.
+
+**Exemplo do seu `server.js`:**
 
 ```js
-// Exemplo do agentesRepository.js
-export async function apagarAgente(id) {
-  const result = await db("agentes").where({ id }).del("*");
-  return result.length ? true : false;
-}
+app.use("/agents", agentesRoutes);
+app.use("/cases", casosRoutes);
 ```
 
-Aqui está o problema fundamental: o método `.del()` do Knex **não retorna um array**, mas sim o número de linhas afetadas (um número inteiro). Portanto, acessar `result.length` não faz sentido e sempre será `undefined`, causando que sua função retorne `false` mesmo quando a deleção foi bem sucedida.
+Enquanto no enunciado e documentação o esperado é:
 
-O mesmo acontece para os métodos `.update()` e `.insert()` que você usou com o segundo parâmetro `'*'`. Para o PostgreSQL, o `.insert()` e `.update()` aceitam esse parâmetro para retornar as linhas afetadas, mas o `.del()` **não suporta** isso.
+```
+/agentes
+/casos
+```
+
+**Sugestão:**
+
+- Alinhe os nomes das rotas para o padrão em português, para evitar confusão e garantir que os clientes da API chamem os endpoints corretos.
+
+```js
+app.use("/agentes", agentesRoutes);
+app.use("/casos", casosRoutes);
+```
+
+- Verifique se, ao testar, você está enviando o token JWT no header `Authorization` com o prefixo `Bearer `, assim:
+
+```
+Authorization: Bearer <seu_token_jwt>
+```
+
+Sem isso, o middleware vai bloquear o acesso.
 
 ---
 
-### Como corrigir?
+### 2. **Problemas no retorno das respostas das rotas de criação e atualização**
 
-- Para `.del()`, verifique se o número retornado é maior que zero:
+Notei que, ao criar um agente, você está retornando os dados do agente com a data formatada, o que está ótimo! Porém, em algumas operações de atualização e exclusão, a forma como você está tratando o resultado pode gerar problemas.
 
-```js
-export async function apagarAgente(id) {
-  const result = await db("agentes").where({ id }).del();
-  return result > 0;  // true se pelo menos uma linha foi deletada
-}
-```
-
-- Para `.update()` e `.insert()`, o retorno com `'*'` funciona no PostgreSQL, mas você precisa garantir que o resultado seja um array e verificar corretamente:
+Por exemplo, no `agentesRepository.js`, nas funções de atualização e exclusão:
 
 ```js
 export async function atualizarAgente(id, dados) {
   const result = await db("agentes").where({ id }).update(dados, "*");
   return result.length ? result[0] : undefined;
 }
-```
 
-Esse código está correto, mas vale confirmar se seu banco está configurado para retornar as linhas atualizadas (o que o PostgreSQL faz). Se não estiver retornando, pode ser necessário ajustar a configuração do Knex.
-
----
-
-### 2. **Métodos `.update()` e `.del()` com retorno esperado**
-
-No seu código, o uso do `.del("*")` está incorreto, pois o `.del()` não suporta o segundo parâmetro para retorno de dados. Isso pode causar falha silenciosa na exclusão.
-
-No `casosRepository.js` também tem o mesmo problema:
-
-```js
-export async function apagarCaso(id) {
-  const result = await db("casos").where({ id }).del("*");
+export async function apagarAgente(id) {
+  const result = await db("agentes").where({ id }).del("*");
   return result.length ? true : false;
 }
 ```
 
-Corrija para:
+**Problema:**
+
+- O método `.update()` do Knex retorna o número de linhas afetadas, **não um array com os registros atualizados**, então `result.length` pode ser `undefined` e causar erros.
+- O método `.del()` retorna o número de linhas deletadas, não um array.
+
+**Como corrigir:**
+
+Para obter o registro atualizado após o update, você pode fazer:
 
 ```js
-export async function apagarCaso(id) {
-  const result = await db("casos").where({ id }).del();
+export async function atualizarAgente(id, dados) {
+  await db("agentes").where({ id }).update(dados);
+  return await obterUmAgente(id); // buscar o registro atualizado
+}
+
+export async function apagarAgente(id) {
+  const result = await db("agentes").where({ id }).del();
   return result > 0;
 }
 ```
 
----
-
-### 3. **Middleware de autenticação: cuidado com erros de token**
-
-Seu middleware está bem implementado, mas é importante garantir que o `process.env.JWT_SECRET` esteja carregado corretamente. Caso contrário, a verificação do token falhará.
-
-Se o token não for passado no header Authorization ou for inválido, seu middleware joga o erro correto, o que é ótimo.
+O mesmo vale para `casosRepository.js`.
 
 ---
 
-### 4. **Migration da tabela `usuarios`**
+### 3. **Migration de `usuarios` sem função `down` implementada**
 
-Sua migration para a tabela `usuarios` está correta, mas o campo `id` é um inteiro autoincremento. Isso está alinhado com o que o repositório espera.
+Nas suas migrations, a criação da tabela `usuarios` está correta, mas a função `down` está vazia:
 
-Só lembre-se de implementar a função `down` para que a migration possa ser revertida, isso é uma boa prática:
+```js
+export async function down(knex) {}
+```
+
+Isso pode causar problemas se precisar reverter a migration.
+
+**Sugestão:**
+
+Implemente o `down` para deletar a tabela, assim:
 
 ```js
 export async function down(knex) {
@@ -114,69 +132,80 @@ export async function down(knex) {
 }
 ```
 
----
-
-### 5. **Resposta do endpoint de registro de usuário**
-
-No `authController.js`, após criar o usuário, você está respondendo com a senha hasheada no corpo da resposta:
-
-```js
-res.status(201).json(body_parse.data);
-```
-
-Isso pode expor a senha hasheada, o que não é uma boa prática. Melhor retornar apenas os dados públicos do usuário, omitindo a senha:
-
-```js
-const { senha, ...usuarioPublico } = body_parse.data;
-res.status(201).json(usuarioPublico);
-```
+Isso ajuda na manutenção do banco e evita erros em rollbacks.
 
 ---
 
-### 6. **Rota de exclusão de usuário**
+### 4. **No logout, o token JWT não é invalidado no servidor**
 
-Na sua rota:
+No seu `authController.js`, o logout apenas limpa `req.user`:
 
 ```js
-router.delete("/users/:id", authController.apagarUsuario);
+export async function logoutUsuario(req, res, next) {
+  try {
+    req.user = undefined;
+
+    res.status(200).json({
+      logout: "Logout realizado com sucesso!",
+    });
+  } catch (e) {
+    next(e);
+  }
+}
 ```
 
-O padrão do projeto sugere que as rotas de usuários fiquem sob `/usuarios` para manter consistência no idioma (português). Isso não é um erro fatal, mas manter a consistência ajuda a evitar confusão.
+**Problema:**
+
+- Como o JWT é stateless, apenas limpar o `req.user` não invalida o token no cliente nem no servidor.
+- Para um logout efetivo, seria necessário implementar uma blacklist de tokens ou usar refresh tokens para controle de sessão.
+
+**Sugestão:**
+
+- Para este desafio, seu logout pode retornar status 200, mas deixe claro na documentação que o cliente precisa descartar o token.
+- Se quiser avançar, pode implementar refresh tokens e blacklist, mas isso é bônus.
 
 ---
 
-## 📚 Recomendações de aprendizado para você
+### 5. **Validação e mensagens de erro detalhadas**
 
-- Para entender melhor o funcionamento do Knex e o retorno dos métodos `.del()`, `.update()` e `.insert()`, recomendo fortemente este vídeo:  
+Você está usando o Zod para validar schemas, o que é excelente! No entanto, para deixar a API mais amigável, recomendo padronizar as mensagens de erro para quando o payload estiver incorreto, retornando status 400 e um JSON com detalhes das falhas.
+
+---
+
+## Recursos recomendados para você brilhar ainda mais! 🌟
+
+- Para entender melhor o uso correto do Knex nas operações de update e delete, veja este vídeo:  
   https://www.youtube.com/watch?v=GLwHSs7t3Ns&t=4s  
-  Ele explica detalhadamente como usar o Knex Query Builder, incluindo o retorno esperado de cada operação.
+  (Guia detalhado do Knex Query Builder)
 
-- Para aprimorar a autenticação JWT e o uso do bcrypt, veja este vídeo excelente, feito pelos meus criadores, que explica os fundamentos da cibersegurança, JWT e hashing:  
+- Para aprofundar em autenticação JWT e logout seguro, recomendo este vídeo, feito pelos meus criadores, que fala muito bem sobre os conceitos básicos e avançados de cibersegurança e JWT:  
   https://www.youtube.com/watch?v=Q4LQOfYwujk
 
-- Para fortalecer sua arquitetura MVC e organização de projetos Node.js, dê uma olhada neste conteúdo:  
+- Se quiser melhorar a organização do seu projeto e entender melhor a arquitetura MVC para Node.js, este vídeo é top:  
   https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s
 
-- Por fim, para garantir que seu ambiente Docker e Knex estejam configurados corretamente, este vídeo pode ajudar:  
-  https://www.youtube.com/watch?v=uEABDBQV-Ek&t=1s
+---
+
+## Resumo rápido dos pontos para focar 🎯
+
+- Ajustar os nomes das rotas para `/agentes` e `/casos` para manter consistência com o enunciado e documentação.
+- Garantir que o token JWT seja enviado no header `Authorization` com o prefixo `Bearer ` para acessar rotas protegidas.
+- Corrigir os métodos `atualizarAgente`, `apagarAgente` e equivalentes para tratar corretamente o retorno do Knex (usar `update` e depois buscar o registro atualizado).
+- Implementar a função `down` nas migrations para permitir rollback seguro.
+- Melhorar o logout para refletir a natureza stateless do JWT (explicar no docs que o cliente deve descartar o token).
+- Padronizar mensagens de erro para payloads inválidos, retornando status 400 com detalhes.
 
 ---
 
-## ✅ Resumo rápido para focar na próxima rodada
+Gabubits, você está no caminho certo! Seu código mostra que você entende os conceitos fundamentais de autenticação, segurança e organização de projetos Node.js com Express e PostgreSQL. Com esses ajustes, sua API vai ficar robusta, profissional e pronta para o mundo real! 🚀
 
-- [ ] Corrija o uso do `.del("*")` para `.del()` e ajuste a verificação do resultado para número maior que zero.
-- [ ] Confirme que o `.update()` e `.insert()` estão retornando os dados conforme esperado, e trate o retorno corretamente.
-- [ ] Implemente o método `down` nas migrations para permitir rollback.
-- [ ] Evite retornar a senha (mesmo que hasheada) na resposta do registro de usuário.
-- [ ] Considere padronizar as rotas para manter consistência semântica (ex: `/usuarios`).
-- [ ] Verifique se a variável de ambiente `JWT_SECRET` está corretamente configurada e carregada.
-- [ ] Continue usando o Zod para validação, pois está muito bem aplicado.
+Continue praticando, revisando seu código e testando cada rota com atenção aos detalhes. Qualquer dúvida, estou aqui para ajudar! 💪😊
+
+Um abraço e bons códigos! 👨‍💻👩‍💻
 
 ---
 
-Gabubits, você está no caminho certo e já tem uma base muito sólida! 💪✨ Com esses ajustes, sua API vai ficar ainda mais robusta, segura e profissional. Se precisar, volte aqui para tirar dúvidas — estou torcendo pelo seu sucesso! 🚀
-
-Um abraço e até a próxima revisão! 👨‍💻🔥
+Se precisar, pode voltar aqui e pedir ajuda para implementar qualquer um desses pontos! 😉
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
