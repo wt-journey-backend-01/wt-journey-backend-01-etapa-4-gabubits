@@ -84,7 +84,9 @@ export async function loginUsuario(req, res, next) {
     res.status(200).json({
       access_token: token,
     });
-  } catch (e) {}
+  } catch (e) {
+    next(e);
+  }
 }
 
 export async function apagarUsuario(req, res, next) {

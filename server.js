@@ -12,8 +12,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(authRoutes);
-app.use("/agentes", authMiddleware, agentesRoutes);
-app.use("/casos", authMiddleware, casosRoutes);
+app.use(authMiddleware);
+app.use("/agentes", agentesRoutes);
+app.use("/casos", casosRoutes);
 
 app.use((req, res, next) => {
   next(
