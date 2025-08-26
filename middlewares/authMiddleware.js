@@ -8,7 +8,7 @@ export function authMiddleware(req, res, next) {
     console.log("Method: ", req.method);
     console.log("Route: ", req.path);
 
-    const tokenHeader = req.headers.authorization;
+    const tokenHeader = req.headers["authorization"];
 
     const token = tokenHeader && tokenHeader.split(" ")[1];
 
