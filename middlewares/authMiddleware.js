@@ -21,13 +21,8 @@ export function authMiddleware(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = decoded;
-    return next();
+    next();
   } catch (e) {
-    if (e.name === "JsonWebTokenError" || e.name === "TokenExpiredError") {
-      return next(
-        new Errors.TokenError({ token: "Token inválido ou expirado" })
-      );
-    }
     next(e);
   }
 }
