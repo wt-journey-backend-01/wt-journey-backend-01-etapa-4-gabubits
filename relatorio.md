@@ -2,7 +2,7 @@
 
 # 🧪 Relatório de Avaliação – Journey Levty Etapa 1 - gabubits
 
-**Data:** 24/08/2025 22:32
+**Data:** 26/08/2025 15:05
 
 **Nota Final:** `52.05/100`
 **Status:** ❌ Reprovado
