@@ -14,7 +14,7 @@ import { z } from "zod";
 export async function obterCasos(req, res, next) {
   if (req.query.agente_id || req.query.status) return next();
   const dados = await casosRepository.obterTodosCasos();
-  res.status(200).json(dados);
+  return res.status(200).json(dados);
 }
 
 // GET /casos | GET /casos?agente_id=uuid | GET /casos?status=aberto
@@ -33,9 +33,9 @@ export async function obterCasosAgenteId(req, res, next) {
     const casos_encontrados = await casosRepository.obterCasosDeUmAgente(
       agente_id
     );
-    res.status(200).json(casos_encontrados);
+    return res.status(200).json(casos_encontrados);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -52,9 +52,9 @@ export async function obterCasosStatus(req, res, next) {
 
     const status = req.query.status;
     const casos_encontrados = await casosRepository.obterCasosStatus(status);
-    res.status(200).json(casos_encontrados);
+    return res.status(200).json(casos_encontrados);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -70,7 +70,7 @@ export async function pesquisarCasos(req, res, next) {
   if (q === undefined) return next();
 
   const casos_encontrados = await casosRepository.pesquisarCasos(q);
-  res.status(200).json(casos_encontrados);
+  return res.status(200).json(casos_encontrados);
 }
 
 // GET /casos/:caso_id/agente
@@ -100,9 +100,9 @@ export async function obterAgenteDoCaso(req, res, next) {
         agente_id: `O agente_id '${agente_id}' não existe nos agentes`,
       });
 
-    res.status(200).json(agente_existe);
+    return res.status(200).json(agente_existe);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -127,9 +127,9 @@ export async function obterUmCaso(req, res, next) {
         id: `O ID '${id_parse.data.id}' não existe nos casos`,
       });
 
-    res.status(200).json(caso_encontrado);
+    return res.status(200).json(caso_encontrado);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -158,9 +158,9 @@ export async function criarCaso(req, res, next) {
       });
 
     const resultado = await casosRepository.adicionarCaso(body_parse.data);
-    res.status(201).json(resultado);
+    return res.status(201).json(resultado);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -213,9 +213,9 @@ export async function atualizarCaso(req, res, next) {
         id: `O ID '${id_parse.data.id}' não existe nos casos`,
       });
 
-    res.status(200).json(caso_atualizado);
+    return res.status(200).json(caso_atualizado);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -236,8 +236,8 @@ export async function apagarCaso(req, res, next) {
         id: `O ID '${id_parse.data.id}' não existe nos casos`,
       });
 
-    res.sendStatus(204);
+    return res.sendStatus(204);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }

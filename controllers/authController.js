@@ -38,9 +38,9 @@ export async function registrarUsuario(req, res, next) {
       senha: hashedPassword,
     });
 
-    res.status(201).json(body_parse.data);
+    return res.status(201).json(body_parse.data);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -81,11 +81,11 @@ export async function loginUsuario(req, res, next) {
       expiresIn: "1d",
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       access_token: token,
     });
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -107,9 +107,9 @@ export async function apagarUsuario(req, res, next) {
         id: `O ID '${id_parse.data.id}' não existe nos usuarios`,
       });
 
-    res.sendStatus(204);
+    return res.sendStatus(204);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -117,10 +117,10 @@ export async function logoutUsuario(req, res, next) {
   try {
     req.user = undefined;
 
-    res.status(200).json({
+    return res.status(200).json({
       logout: "Logout realizado com sucesso!",
     });
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }

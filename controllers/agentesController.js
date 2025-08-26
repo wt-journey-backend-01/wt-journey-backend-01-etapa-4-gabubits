@@ -12,8 +12,9 @@ import { z } from "zod";
 export async function obterAgentes(req, res, next) {
   if (req.query.cargo || req.query.sort) return next();
   const dados = await agentesRepository.obterTodosAgentes();
-  res.status(200).json(dados);
+  return res.status(200).json(dados);
 }
+
 // GET /agentes | GET /agentes?cargo | GET /agentes?sort
 export async function obterAgentesCargo(req, res, next) {
   if (!req.query.cargo) return next();
@@ -22,7 +23,7 @@ export async function obterAgentesCargo(req, res, next) {
   const agentes_encontrados = await agentesRepository.obterAgentesDoCargo(
     cargo
   );
-  res.status(200).json(agentes_encontrados);
+  return res.status(200).json(agentes_encontrados);
 }
 
 export async function obterAgentesSort(req, res, next) {
@@ -49,9 +50,9 @@ export async function obterAgentesSort(req, res, next) {
         await agentesRepository.obterAgentesOrdenadosPorDataIncorpDesc();
     }
 
-    res.status(200).json(agentes_encontrados);
+    return res.status(200).json(agentes_encontrados);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -74,9 +75,9 @@ export async function obterUmAgente(req, res, next) {
         id: `O ID '${id_parse.data.id}' não existe nos agentes`,
       });
 
-    res.status(200).json(agente_encontrado);
+    return res.status(200).json(agente_encontrado);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -99,9 +100,9 @@ export async function obterCasosDoAgente(req, res, next) {
       });
 
     const casos_encontrados = await obterCasosDeUmAgente(id_parse.data.id);
-    res.status(200).json(casos_encontrados);
+    return res.status(200).json(casos_encontrados);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -120,14 +121,14 @@ export async function criarAgente(req, res, next) {
 
     const resultado = await agentesRepository.adicionarAgente(body_parse.data);
 
-    res.status(201).json({
+    return res.status(201).json({
       ...resultado,
       dataDeIncorporacao: resultado.dataDeIncorporacao
         .toISOString()
         .split("T")[0],
     });
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -170,14 +171,14 @@ export async function atualizarAgente(req, res, next) {
         id: `O ID '${id_parse.data.id}' não existe nos agentes`,
       });
 
-    res.status(200).json({
+    return res.status(200).json({
       ...agente_atualizado,
       dataDeIncorporacao: agente_atualizado.dataDeIncorporacao
         .toISOString()
         .split("T")[0],
     });
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
 
@@ -200,8 +201,8 @@ export async function apagarAgente(req, res, next) {
         id: `O ID '${id_parse.data.id}' não existe nos agentes`,
       });
 
-    res.sendStatus(204);
+    return res.sendStatus(204);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
