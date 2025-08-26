@@ -64,5 +64,6 @@ export class TokenError extends APIError {
 
 export function errorHandler(err, req, res, next) {
   const { status, message, errors } = err;
-  res.status(status).send({ status, message, errors });
+  console.log(status, message, errors);
+  res.status(status || 500).send({ status, message, errors });
 }
