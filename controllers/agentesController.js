@@ -11,12 +11,17 @@ import { z } from "zod";
 
 export async function obterAgentes(req, res, next) {
   if (req.query.cargo || req.query.sort) return next();
+  console.log("Method: ", req.method);
+  console.log("Route: ", req.path);
   const dados = await agentesRepository.obterTodosAgentes();
   res.status(200).json(dados);
 }
 // GET /agentes | GET /agentes?cargo | GET /agentes?sort
 export async function obterAgentesCargo(req, res, next) {
   if (!req.query.cargo) return next();
+  console.log("Query: ", req.query);
+  console.log("Method: ", req.method);
+  console.log("Route: ", req.path);
 
   const cargo = req.query.cargo;
   const agentes_encontrados = await agentesRepository.obterAgentesDoCargo(
@@ -27,6 +32,10 @@ export async function obterAgentesCargo(req, res, next) {
 
 export async function obterAgentesSort(req, res, next) {
   if (!req.query.sort) return next();
+
+  console.log("Query: ", req.query);
+  console.log("Method: ", req.method);
+  console.log("Route: ", req.path);
   try {
     const sort_parse = sortSchema.safeParse(req.query);
 
@@ -58,6 +67,9 @@ export async function obterAgentesSort(req, res, next) {
 // GET /agentes/:id
 export async function obterUmAgente(req, res, next) {
   try {
+    console.log("Params: ", req.params);
+    console.log("Method: ", req.method);
+    console.log("Route: ", req.path);
     const id_parse = idSchema.safeParse(req.params);
 
     if (!id_parse.success)
@@ -83,6 +95,9 @@ export async function obterUmAgente(req, res, next) {
 // GET /agentes/:id/casos
 export async function obterCasosDoAgente(req, res, next) {
   try {
+    console.log("Params: ", req.params);
+    console.log("Method: ", req.method);
+    console.log("Route: ", req.path);
     const id_parse = idSchema.safeParse(req.params);
     if (!id_parse.success)
       throw new Errors.InvalidIdError(
@@ -108,6 +123,10 @@ export async function obterCasosDoAgente(req, res, next) {
 // POST /agentes
 export async function criarAgente(req, res, next) {
   try {
+    console.log("Body:\n", req.body);
+    console.log("Method: ", req.method);
+    console.log("Route: ", req.path);
+
     const body_parse = agenteSchema.safeParse(req.body);
 
     if (!body_parse.success) {
@@ -134,6 +153,11 @@ export async function criarAgente(req, res, next) {
 // PUT /agentes/:id | PATCH /agentes/:id
 export async function atualizarAgente(req, res, next) {
   try {
+    console.log("Body:\n", req.body);
+    console.log("Params: ", req.params);
+    console.log("Method: ", req.method);
+    console.log("Route: ", req.path);
+
     if (req.body.id && req.body.id !== req.params.id)
       throw new Errors.InvalidFormatError({
         id: ["Não é permitido alterar o ID do agente"],
@@ -184,6 +208,10 @@ export async function atualizarAgente(req, res, next) {
 // DELETE /agentes/:id
 export async function apagarAgente(req, res, next) {
   try {
+    console.log("Params: ", req.params);
+    console.log("Method: ", req.method);
+    console.log("Route: ", req.path);
+
     const id_parse = idSchema.safeParse(req.params);
 
     if (!id_parse.success)

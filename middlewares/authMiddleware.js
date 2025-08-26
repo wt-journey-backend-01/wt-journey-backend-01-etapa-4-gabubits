@@ -3,10 +3,7 @@ import jwt from "jsonwebtoken";
 
 export function authMiddleware(req, res, next) {
   try {
-    console.log("Header recebido:\n", req.headers);
-    console.log("Body recebido:\n", req.body);
-    console.log("Method: ", req.method);
-    console.log("Route: ", req.path);
+    console.log("Header recebido: ", req.headers.authorization);
 
     const tokenHeader = req.headers.authorization;
 
