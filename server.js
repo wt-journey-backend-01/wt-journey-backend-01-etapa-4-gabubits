@@ -2,27 +2,18 @@ import express from "express";
 import agentesRoutes from "./routes/agentesRoutes.js";
 import casosRoutes from "./routes/casosRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
-import { errorHandler, NotFoundRouteError } from "./utils/errorHandler.js";
+import { errorHandler } from "./utils/errorHandler.js";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(authRoutes);
-app.use(authMiddleware);
-app.use("/agentes", agentesRoutes);
-app.use("/casos", casosRoutes);
-
-app.use((req, res, next) => {
-  next(
-    new NotFoundRouteError({
-      endpoint: `O endpoint '${req.method} ${req.url}' não existe nessa aplicação.`,
-    })
-  );
-});
+app.use("/casos", authMiddleware, casosRoutes);
+app.use("/agentes", authMiddleware, agentesRoutes);
 
 app.use(errorHandler);
 
