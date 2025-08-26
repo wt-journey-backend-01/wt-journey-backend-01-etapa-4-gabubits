@@ -18,10 +18,16 @@ export function authMiddleware(req, res, next) {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    jwt.verify(token, process.env.JWT_SECRET || "secret", (error, decoded) => {
+      if (error) {
+        throw new Errors.TokenError({
+          token: "Token inválido",
+        });
+      }
 
-    req.user = decoded;
-    return next();
+      req.user = decoded;
+      return next();
+    });
   } catch (e) {
     return next(e);
   }
