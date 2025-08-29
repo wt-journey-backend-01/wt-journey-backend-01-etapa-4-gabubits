@@ -1,230 +1,177 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 6 créditos restantes para usar o sistema de feedback AI.
+Você tem 5 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para gabubits:
 
-Nota final: **50.5/100**
+Nota final: **98.4/100**
 
-Olá, gabubits! 🎉
-
-Primeiramente, parabéns pelo esforço e dedicação até aqui! Você estruturou muito bem sua API, organizou as pastas conforme o esperado, implementou autenticação com JWT, hashing de senha com bcrypt e cuidou da proteção das rotas com middleware. Esses são pontos fundamentais e você acertou legal — isso já te garantiu várias aprovações nos testes! 👏
-
-Além disso, você conseguiu vários bônus importantes, como a implementação do logout e a exclusão de usuários, além de mensagens de erro customizadas e validações robustas com Zod. Isso mostra que você entende muito bem a lógica de segurança e validação, o que é essencial para aplicações reais. 🚀
+Olá, gabubits! 🚀 Que jornada incrível você fez até aqui! Parabéns pela nota fantástica de 98.4/100 — isso mostra muito empenho e dedicação! 🎉👏
 
 ---
 
-## Agora, vamos falar das oportunidades de melhoria e dos testes que falharam para destravar tudo, beleza? 🔍
+### 🎉 Pontos Fortes e Conquistas Bônus 🌟
 
-### 1. Estrutura de Diretórios: Está OK!
+Antes de tudo, quero destacar que você implementou muito bem a maior parte dos requisitos obrigatórios. Seu código está organizado e segue a arquitetura MVC direitinho, com controllers, repositories, middlewares e rotas bem separados. Isso é fundamental para manter a escalabilidade e a manutenção do projeto.
 
-Você seguiu direitinho a estrutura esperada, com pastas separadas para controllers, repositories, routes, middlewares, utils, db, migrations e seeds. Isso é ótimo para manter o código organizado e escalável.
+Além disso, você conseguiu passar vários testes bônus importantes, como:
 
----
+- Filtragem de casos por status e agente;
+- Busca de casos por palavras-chave;
+- Endpoint para buscar agente responsável por caso;
+- Ordenação de agentes por data de incorporação;
+- Mensagens de erro customizadas para IDs inválidos;
+- Endpoint `/usuarios/me` para retornar dados do usuário autenticado.
 
-### 2. Testes que falharam — Análise e Causas Raiz
-
-Você teve falha em **todos os testes base relacionados a agentes e casos**, que são os recursos centrais da aplicação (criar, listar, buscar, atualizar, deletar agentes e casos, e lidar com erros de validação e autorização). Vamos destrinchar os motivos mais prováveis:
-
----
-
-### A) Problemas nas operações CRUD de agentes e casos (criar, listar, buscar, atualizar, deletar)
-
-**Sintomas:**
-
-- Falha em criar agentes e casos com status 201.
-- Falha em listar todos agentes e casos com status 200.
-- Falha em buscar agente/caso por ID.
-- Falha em atualizar agentes/casos com PUT e PATCH.
-- Falha em deletar agentes/casos.
-- Erros 400 e 404 para payloads inválidos ou IDs inexistentes.
-- Erros 401 para falta de token JWT.
-
-**Análise detalhada:**
-
-Olhando seu código dos repositórios `agentesRepository.js` e `casosRepository.js`, percebi um padrão que está causando problema:
-
-```js
-// Exemplo do agentesRepository.js
-export async function adicionarAgente(dados) {
-  const result = await db("agentes").insert(dados, "*");
-  return result.length ? result[0] : undefined;
-}
-
-export async function atualizarAgente(id, dados) {
-  const result = await db("agentes").where({ id }).update(dados, "*");
-  return result.length ? result[0] : undefined;
-}
-
-export async function apagarAgente(id) {
-  const result = await db("agentes").where({ id }).del("*");
-  return result.length ? true : false;
-}
-```
-
-**Por que isso é um problema?**
-
-- Os métodos `.update()` e `.del()` do Knex **não retornam arrays com os registros atualizados ou deletados**, eles retornam a quantidade de linhas afetadas (um número).
-- Você está tentando acessar `.length` e retornar `result[0]`, mas `result` é um número, não um array.
-- Isso faz com que seu código retorne `undefined` e, consequentemente, o controller entenda que o registro não existe, disparando erros 404 ou falhas silenciosas.
-
-**Como corrigir?**
-
-Para `.update()` e `.del()`, você deve verificar se o número de linhas afetadas é maior que zero, e para obter os dados atualizados, faça uma consulta separada após o update.
-
-Exemplo de correção para `atualizarAgente`:
-
-```js
-export async function atualizarAgente(id, dados) {
-  const count = await db("agentes").where({ id }).update(dados);
-  if (count === 0) return undefined;
-  // Buscar o agente atualizado para retornar
-  return await db("agentes").where({ id }).first();
-}
-```
-
-Para `apagarAgente`:
-
-```js
-export async function apagarAgente(id) {
-  const count = await db("agentes").where({ id }).del();
-  return count > 0;
-}
-```
-
-O mesmo vale para `casosRepository.js`:
-
-```js
-export async function atualizarCaso(id, dados) {
-  const count = await db("casos").where({ id }).update(dados);
-  if (count === 0) return undefined;
-  return await db("casos").where({ id }).first();
-}
-
-export async function apagarCaso(id) {
-  const count = await db("casos").where({ id }).del();
-  return count > 0;
-}
-```
+Esses extras mostram que você foi além do básico e entregou uma aplicação robusta e com funcionalidades avançadas! 🔥
 
 ---
 
-### B) Middleware de autenticação — possível problema com token
+### 🚨 Análise dos Testes que Falharam
 
-Seu middleware `authMiddleware.js` está correto no geral, mas observe que você faz:
+O único teste base que falhou foi:
+
+- **['AGENTS: Recebe status code 401 ao tentar buscar agente corretamente mas sem header de autorização com token JWT']**
+
+E alguns testes bônus falharam, mas são relacionados à filtragem e detalhes que você já implementou parcialmente.
+
+Vamos focar no teste base que falhou, pois ele indica um ponto crítico na segurança da aplicação.
+
+---
+
+### 🕵️‍♂️ Análise do Erro: Falha no status 401 para rotas protegidas (Ex: GET /agentes sem token)
+
+O teste espera que, ao tentar acessar as rotas de agentes sem o header `Authorization` com um token JWT válido, a API retorne um status HTTP 401 Unauthorized.
+
+**O que seu código faz atualmente?**
+
+- Você tem um middleware `authMiddleware.js` que verifica o token no header `Authorization` ou em cookies.
+- Esse middleware lança um erro customizado `TokenError` caso o token esteja ausente ou inválido.
+- Esse middleware está aplicado corretamente nas rotas de agentes e casos, por exemplo em `routes/agentesRoutes.js`:
 
 ```js
-const token = cookieToken || headerToken;
+router.get("/", authMiddleware, agentesController.obterAgentes, ...);
+```
 
+**Por que o teste pode estar falhando?**
+
+Olhando para o middleware, ele lança erros, mas não está claro se esses erros resultam em um status 401 na resposta.
+
+No seu `server.js`, você importa e usa o `errorHandler`:
+
+```js
+import { errorHandler } from "./utils/errorHandler.js";
+
+app.use(errorHandler);
+```
+
+Porém, o código do `errorHandler.js` não foi enviado aqui, então não podemos confirmar se ele está mapeando corretamente o erro `TokenError` para status 401.
+
+**Possível causa raiz:**  
+O middleware lança a exceção, mas o `errorHandler` não está retornando o status 401 esperado para erros de token, ou está retornando outro status (ex: 500).
+
+---
+
+### Como corrigir esse problema?
+
+1. **Verifique o `errorHandler.js`** para garantir que ele captura o erro `TokenError` e responde com status 401. Por exemplo:
+
+```js
+export function errorHandler(err, req, res, next) {
+  if (err instanceof TokenError) {
+    return res.status(401).json({ error: err.message || "Token inválido ou expirado" });
+  }
+  // demais tratamentos...
+}
+```
+
+2. **Confirme que o `TokenError` está corretamente importado e usado no middleware** (parece que sim).
+
+3. **Teste manualmente** acessando uma rota protegida sem passar token e veja se o status 401 é retornado.
+
+---
+
+### Alguma outra pista no seu código?
+
+No middleware `authMiddleware.js` você tem:
+
+```js
 if (!token) {
   throw new Errors.TokenError({
     access_token: "Token não fornecido",
   });
 }
+```
 
-jwt.verify(token, process.env.JWT_SECRET || "secret", (error, user) => {
-  if (error) {
-    throw new Errors.TokenError({
-      access_token: "Token inválido ou expirado",
-    });
+Esse erro é lançado, mas o conteúdo é um objeto. Certifique-se que a classe `TokenError` está preparada para receber um objeto e formatá-lo para uma mensagem legível.
+
+Se o `errorHandler` espera uma string, pode ser que a resposta JSON não esteja correta.
+
+---
+
+### Dica prática para o seu `errorHandler.js`
+
+Se ele ainda não está assim, recomendo que faça algo parecido com:
+
+```js
+import { TokenError } from "./errorHandler.js";
+
+export function errorHandler(err, req, res, next) {
+  if (err instanceof TokenError) {
+    const message = typeof err.message === "object" ? JSON.stringify(err.message) : err.message;
+    return res.status(401).json({ error: message });
   }
-
-  req.user = user;
-  return next();
-});
-```
-
-Aqui, você está usando `process.env.JWT_SECRET || "secret"` como fallback. Isso pode causar problemas se o `.env` não estiver carregado corretamente ou se a variável `JWT_SECRET` não estiver definida, porque o token foi criado com um segredo diferente do que está sendo usado para verificar.
-
-**Recomendação:**
-
-- Garanta que `JWT_SECRET` está definido no `.env` e carregado antes de iniciar o servidor.
-- Nunca use fallback para segredo JWT — isso é uma brecha de segurança e pode invalidar os tokens.
-- Se quiser, valide na inicialização do app se `JWT_SECRET` está definido, e lance erro se não estiver.
-
----
-
-### C) Resposta do registro de usuário
-
-No `authController.js`, na função `registrarUsuario`, você faz:
-
-```js
-await usuariosRepository.criarUsuario({
-  ...body_parse.data,
-  senha: hashedPassword,
-});
-
-return res.status(201).json(body_parse.data);
-```
-
-Aqui você está retornando a senha **em texto puro** no JSON da resposta, o que não é seguro nem recomendado.
-
-O ideal é retornar apenas os dados públicos do usuário (sem senha), ou pelo menos retornar o usuário criado já com a senha hasheada.
-
-Sugestão:
-
-```js
-const usuarioCriado = await usuariosRepository.criarUsuario({
-  ...body_parse.data,
-  senha: hashedPassword,
-});
-
-// Retornar dados sem a senha
-const { senha, ...usuarioSemSenha } = usuarioCriado;
-
-return res.status(201).json(usuarioSemSenha);
+  // outros erros...
+  return res.status(500).json({ error: "Erro interno do servidor" });
+}
 ```
 
 ---
 
-### D) Migration da tabela `usuarios`
+### Sobre a Estrutura de Diretórios
 
-Sua migration para `usuarios` está OK, mas o campo `senha` é do tipo string simples, sem tamanho definido. Para armazenar hashes bcrypt, geralmente usamos `string("senha", 60)` para garantir espaço suficiente.
+Sua estrutura está perfeita e condiz com o que foi solicitado:
 
-Não é obrigatório, mas pode evitar problemas futuros.
+- Pastas `routes/`, `controllers/`, `repositories/`, `middlewares/` e `utils/` estão presentes e com os arquivos esperados.
+- Arquivos novos para autenticação (`authRoutes.js`, `authController.js`, `usuariosRepository.js`, `authMiddleware.js`) estão criados e organizados.
+- Migration para a tabela `usuarios` está criada corretamente.
+- Uso do `.env` para variáveis sensíveis está correto.
 
----
-
-### E) Sobre os testes bônus que falharam
-
-Os testes bônus relacionados a filtros, buscas e endpoint `/usuarios/me` falharam. Isso indica que essas funcionalidades ainda não foram implementadas ou estão incompletas.
-
-Para avançar, você pode:
-
-- Implementar o endpoint `/usuarios/me` que retorna os dados do usuário autenticado, usando `req.user` do middleware.
-- Melhorar os filtros das rotas de agentes e casos para suportar buscas por status, cargo, data de incorporação e keywords.
-- Garantir que os erros customizados estejam claros e as mensagens sejam amigáveis.
+Parabéns por manter essa organização! Isso facilita demais o desenvolvimento e manutenção.
 
 ---
 
-## Recursos recomendados para você:
+### Recomendações para você continuar evoluindo 🚀
 
-- Para entender e corrigir os retornos do Knex em update e delete, veja esse vídeo:  
-  https://www.youtube.com/watch?v=GLwHSs7t3Ns&t=4s (Guia detalhado do Knex Query Builder)
+- **Revise o tratamento de erros no `errorHandler.js`**, especialmente para erros de autenticação e autorização, para garantir que o status HTTP correto (401) seja retornado.
+- **Teste manualmente as rotas protegidas sem token**, usando ferramentas como Postman ou Insomnia, para entender como a API responde.
+- **Considere melhorar a mensagem de erro para o cliente**, para que fique claro quando o token está faltando ou inválido.
+- Para aprofundar o entendimento sobre autenticação JWT, recomendo fortemente este vídeo, feito pelos meus criadores, que explica bem os conceitos básicos e práticos da cibersegurança:  
+  https://www.youtube.com/watch?v=Q4LQOfYwujk  
+- Para entender melhor o uso do JWT na prática, este vídeo é excelente:  
+  https://www.youtube.com/watch?v=keS0JWOypIU  
+- E para dominar o uso do bcrypt com JWT, veja este conteúdo:  
+  https://www.youtube.com/watch?v=L04Ln97AwoY  
 
-- Sobre autenticação JWT e boas práticas:  
-  https://www.youtube.com/watch?v=Q4LQOfYwujk (Esse vídeo, feito pelos meus criadores, fala muito bem sobre os conceitos básicos e fundamentais da cibersegurança)
-
-- Para hashing de senhas e uso do bcrypt junto com JWT:  
-  https://www.youtube.com/watch?v=L04Ln97AwoY
-
----
-
-## Resumo rápido para focar:
-
-- Corrija os métodos de update e delete nos repositórios para lidar corretamente com o retorno do Knex (número de linhas afetadas) e buscar dados atualizados quando necessário.
-- Evite retornar a senha em texto no JSON de resposta do registro de usuário.
-- Garanta que a variável de ambiente `JWT_SECRET` esteja definida e usada consistentemente para criar e verificar tokens.
-- Implemente os filtros e endpoints bônus para melhorar a experiência e atender aos testes extras.
-- Continue usando validações robustas com Zod e tratamento de erros customizados — isso está ótimo!
+Se precisar, dê uma revisada também em como o `errorHandler` deve ser estruturado para lidar com erros customizados.
 
 ---
 
-Gabubits, seu projeto está muito bem encaminhado, e com esses ajustes você vai conseguir passar nos testes base e ainda avançar nos bônus! 🚀 Continue assim, com essa vontade de aprender e melhorar, que você vai longe!
+### Resumo rápido dos principais pontos para focar:
 
-Se precisar de ajuda para implementar as correções, é só chamar! 💪😉
+- 🚨 **Corrigir o tratamento do erro de token no middleware e no `errorHandler` para garantir retorno 401.**
+- 🔐 Testar rotas protegidas sem token para validar comportamento esperado.
+- 📚 Revisar vídeos recomendados para consolidar conceitos de autenticação JWT e segurança.
+- ✅ Continuar mantendo a arquitetura limpa e modular, como você já faz muito bem.
+- 💡 Opcional: implementar refresh tokens para melhorar a experiência do usuário (bônus).
 
-Boa codificação e até a próxima! 👋✨
+---
+
+Gabubits, seu projeto está muito bem estruturado e quase lá para ser perfeito! Só um ajuste no tratamento do erro de autenticação para garantir que o status 401 seja retornado e você vai destravar esse último teste obrigatório. Continue assim, com essa garra e atenção aos detalhes, que você vai longe! 🚀✨
+
+Se precisar de ajuda para ajustar o `errorHandler`, me chame que te ajudo a montar o código certinho! 😉
+
+Abraços e sucesso! 👊🔥
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
