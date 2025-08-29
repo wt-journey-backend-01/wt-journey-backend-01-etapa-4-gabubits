@@ -11,7 +11,7 @@ export function authMiddleware(req, res, next) {
 
     if (!token) {
       throw new Errors.TokenError({
-        access_token: "Token não fornecido",
+        error: "Token não fornecido",
       });
     }
 
@@ -21,7 +21,7 @@ export function authMiddleware(req, res, next) {
     return next();
   } catch (e) {
     if (e.name === "JsonWebTokenError" || e.name === "TokenExpiredError") {
-      return next(new Errors.TokenError({ access_token: "Token inválido" }));
+      return next(new Errors.TokenError({ error: "Token inválido" }));
     }
     return next(e);
   }
