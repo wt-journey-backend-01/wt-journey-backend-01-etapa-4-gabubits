@@ -130,3 +130,24 @@ export async function logoutUsuario(req, res, next) {
     return next(e);
   }
 }
+
+export async function usuarioLogado(req, res, next) {
+  if (!req.user.email) return next();
+
+  try {
+    const { email } = req.user;
+
+    const usuario_existe = await usuariosRepository.obterUsuario(email);
+
+    if (!usuario_existe) {
+      throw new Errors.UserNotFoundError({
+        user: `O usuário com o email '${email}' não foi encontrado.`,
+      });
+    }
+    return res
+      .status(200)
+      .json({ nome: usuario_existe.nome, email: usuario_existe.email });
+  } catch (e) {
+    return next(e);
+  }
+}
