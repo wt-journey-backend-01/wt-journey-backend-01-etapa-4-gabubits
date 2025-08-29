@@ -10,7 +10,9 @@ export function authMiddleware(req, res, next) {
     const token = cookieToken || headerToken;
 
     if (!token) {
-      return res.status(401).json({ error: "Token não fornecido" });
+      throw new Errors.TokenError({
+        access_token: "Token não fornecido",
+      });
     }
 
     const user = jwt.verify(token, process.env.JWT_SECRET || "secret");
@@ -19,7 +21,7 @@ export function authMiddleware(req, res, next) {
     return next();
   } catch (e) {
     if (e.name === "JsonWebTokenError" || e.name === "TokenExpiredError") {
-      return res.status(401).json({ error: "Token inválido ou expirado" });
+      return next(new Errors.TokenError({ access_token: "Token inválido" }));
     }
     return next(e);
   }
