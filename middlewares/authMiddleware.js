@@ -21,9 +21,7 @@ export function authMiddleware(req, res, next) {
     return next();
   } catch (e) {
     if (e.name === "JsonWebTokenError" || e.name === "TokenExpiredError") {
-      return next(
-        new Errors.TokenError({ token: "Token inválido ou expirado" })
-      );
+      return next(new Errors.TokenError({ access_token: "Token inválido" }));
     }
     return next(e);
   }
