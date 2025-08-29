@@ -46,7 +46,7 @@ export class EmailExistsError extends APIError {
 
 export class UserNotFoundError extends APIError {
   constructor(errors) {
-    super(404, "Usuário não encontrado", errors);
+    super(401, "Usuário não encontrado", errors);
   }
 }
 

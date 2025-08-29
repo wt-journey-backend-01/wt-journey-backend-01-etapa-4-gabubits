@@ -30,9 +30,7 @@ export async function registrarUsuario(req, res, next) {
       });
     }
 
-    const salt = await bcrypt.genSalt(
-      parseInt(process.env.SALT_ROUNDS || "10")
-    );
+    const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(body_parse.data.senha, salt);
 
     await usuariosRepository.criarUsuario({
@@ -40,7 +38,9 @@ export async function registrarUsuario(req, res, next) {
       senha: hashedPassword,
     });
 
-    return res.status(201).json(body_parse.data);
+    return res
+      .status(201)
+      .json({ nome: body_parse.data.nome, email: body_parse.data.email });
   } catch (e) {
     return next(e);
   }
@@ -79,9 +79,13 @@ export async function loginUsuario(req, res, next) {
       });
     }
 
-    const token = jwt.sign(usuario_existe, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    const token = jwt.sign(
+      { id: usuario_existe.id, email: body_parse.data.email },
+      process.env.JWT_SECRET || "secret",
+      {
+        expiresIn: "30m",
+      }
+    );
 
     return res.status(200).json({
       access_token: token,
