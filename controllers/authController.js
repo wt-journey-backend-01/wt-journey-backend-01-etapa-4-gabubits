@@ -12,7 +12,6 @@ import jwt from "jsonwebtoken";
 export async function registrarUsuario(req, res, next) {
   try {
     const body_parse = usuarioRegSchema.safeParse(req.body);
-
     if (!body_parse.success) {
       const { formErrors, fieldErrors } = z.flattenError(body_parse.error);
       throw new Errors.InvalidFormatError({
@@ -31,7 +30,10 @@ export async function registrarUsuario(req, res, next) {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(body_parse.data.senha, 10);
+    const salt = await bcrypt.genSalt(
+      parseInt(process.env.SALT_ROUNDS || "10")
+    );
+    const hashedPassword = await bcrypt.hash(body_parse.data.senha, salt);
 
     await usuariosRepository.criarUsuario({
       ...body_parse.data,

@@ -9,12 +9,12 @@ export async function seed(knex) {
     {
       nome: "Fulano",
       email: "fulano@gmail.com",
-      senha: "Ful@no123",
+      senha: "$2b$10$C1o1d/MeMmcUJerJEp1Cr.0omC/M1W5gY7MuetkBPA6U4bxgVokBG",
     },
     {
       nome: "Ciclano",
       email: "ciclano@gmail.com",
-      senha: "Cicl@no123",
+      senha: "$2b$10$6rwx8ri11j9YXaStDz0gCOP.u3jsXkqH4CV7UyFs6ayOnLfmOPozO",
     },
   ]);
 }
